@@ -1,0 +1,31 @@
+stages:
+  - build
+  - nonify
+
+build-frontend-code-job:
+  stage: build
+  only:
+    changes:
+      - frontend/*
+  script:
+    - cd frontend
+    - npm install
+    - npm run build
+  artifacts:
+    paths:
+      - frontend/dist/frontend/*
+
+telegram-notification-frontend:
+  stage: nonify
+  only:
+    changes:
+      - frontend/*
+    variables:
+      - $CI_COMMIT_MESSAGE =~ /send notification/
+  script:
+    - >
+      curl -X POST -H 'Content-type: application/json' \
+        --data "{\"chat_id\": \"-1002007326342\", \"text\": \"Никита Семеняк собрал frontend. URL для скачивания артефактов: ($CI_PROJECT_URL/-/jobs/artifacts/$CI_COMMIT_SHA/download?job=build-frontend-code-job)\"}" \
+        https://api.telegram.org/bot5933756043:AAE8JLL5KIzgrNBeTP5e-1bkbJy4YRoeGjs/sendMessage
+  needs:
+    - build-frontend-code-job

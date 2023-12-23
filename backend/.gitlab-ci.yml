@@ -63,12 +63,12 @@ telegram-notification-backend:
     changes:
       - backend/**
     variables:
-      - $CI_COMMIT_MESSAGE =~ /send notification/
+      - $CI_COMMIT_MESSAGE =~ /all tests passed/
   script:
     - >
       curl -X POST -H 'Content-type: application/json' \
         --data "{\"chat_id\": \"-1002007326342\", \"text\": \"Никита Семеняк собрал backend. URL для скачивания артефактов: ($CI_PROJECT_URL/-/jobs/artifacts/$CI_COMMIT_SHA/download?job=build-backend-code-job)\"}" \
-        https://api.telegram.org/bot5933756043:AAE8JLL5KIzgrNBeTP5e-1bkbJy4YRoeGjs/sendMessage
+        https://api.telegram.org/bot$TELEGRAM_KEY/sendMessage
   needs:
     - build-backend-code-job
     - sonarqube-backend-sast

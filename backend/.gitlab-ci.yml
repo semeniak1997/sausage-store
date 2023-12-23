@@ -1,6 +1,10 @@
 stages:
   - build
+  - test
   - nonify
+
+include:
+  - template: Security/SAST.gitlab-ci.yml
 
 build-backend-code-job:
   stage: build
@@ -13,6 +17,20 @@ build-backend-code-job:
   artifacts:
     paths:
       - backend/target/sausage-store-0.0.1-SNAPSHOT.jar
+
+spotbugs-sast:
+  stage: test
+  variables:
+    COMPILE: "false"
+    SAST_JAVA_VERSION: 11
+    MAVEN_REPO_PATH: ${CI_PROJECT_DIR}/.m2/repository
+  cache:
+    paths:
+      - ${CI_PROJECT_DIR}/.m2/repository
+  artifacts:
+    reports:
+       sast: gl-sast-report.json
+
 
 telegram-notification-backend:
   stage: nonify

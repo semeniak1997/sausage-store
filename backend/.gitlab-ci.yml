@@ -10,7 +10,7 @@ build-backend-code-job:
   stage: build
   only:
     changes:
-      - backend/*
+      - backend/**
   script:
     - cd backend
     - mvn package -Dmaven.repo.local=${CI_PROJECT_DIR}/.m2/repository 
@@ -61,7 +61,7 @@ telegram-notification-backend:
   stage: nonify
   only:
     changes:
-      - backend/*
+      - backend/**
     variables:
       - $CI_COMMIT_MESSAGE =~ /send notification/
   script:
@@ -71,4 +71,5 @@ telegram-notification-backend:
         https://api.telegram.org/bot5933756043:AAE8JLL5KIzgrNBeTP5e-1bkbJy4YRoeGjs/sendMessage
   needs:
     - build-backend-code-job
+    - sonarqube-backend-sast
   

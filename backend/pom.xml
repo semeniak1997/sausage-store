@@ -10,9 +10,16 @@
     </parent>
     <groupId>com.yandex.practicum.devops</groupId>
     <artifactId>sausage-store</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>${env.VERSION}</version>
     <name>sausage-store</name>
     <description>Backend for sausage-store</description>
+    <distributionManagement>
+      <repository>
+           <id>sausage-store</id>
+           <name>sausage-store</name>
+           <url>${env.NEXUS_REPO_URL}/sausage-store/</url>
+      </repository>
+    </distributionManagement>
     <properties>
         <java.version>16</java.version>
         <sonar.projectKey>test_manual</sonar.projectKey>

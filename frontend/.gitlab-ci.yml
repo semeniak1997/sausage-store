@@ -1,13 +1,21 @@
+cache:
+  paths:
+    - frontend/dist/frontend
+
+variables:
+  VERSION: 1.0.${CI_PIPELINE_ID}
+
 stages:
   - build
   - test
   - nonify
+  - release
 
 build-frontend-code-job:
   stage: build
   only:
     changes:
-      - frontend/**
+      - frontend/**/*
   script:
     - cd frontend
     - npm install
@@ -53,3 +61,18 @@ telegram-notification-frontend:
   needs:
     - build-frontend-code-job
     - sonarqube-frontend-sast
+
+upload-frontend-release:
+  stage: release
+  only:
+    changes:
+    - frontend/**/*
+  needs:
+    - build-frontend-code-job
+  script:
+    - cd frontend/dist
+    - tar czvf sausage-store-${VERSION}.tar.gz frontend
+    - >
+      curl -v -u "${NEXUS_REPO_USER}:${NEXUS_REPO_PASS}"
+      --upload-file sausage-store-${VERSION}.tar.gz
+      ${NEXUS_REPO_URL}${NEXUS_FRONTEND}${VERSION}/sausage-store-${VERSION}.tar.gz

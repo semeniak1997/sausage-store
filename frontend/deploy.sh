@@ -2,7 +2,7 @@
 set -xe
 
 sudo cp -rf sausage-store.conf /etc/nginx/sites-enabled/sausage-store.conf
-sudo ln -sf /etc/nginx/sites-enabled/sausage-store.conf /etc/nginx/sites-enabled/sausage-store.conf 
+sudo ln -sf /etc/nginx/sites-available/sausage-store.conf /etc/nginx/sites-enabled/sausage-store.conf 
 
 sudo rm -rf /home/student/sausage-store-front.tar.gz
 

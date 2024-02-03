@@ -10,6 +10,7 @@ stages:
   - test
   - nonify
   - release
+  - deploy
 
 build-frontend-code-job:
   stage: build

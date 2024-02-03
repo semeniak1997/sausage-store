@@ -13,6 +13,7 @@ stages:
   - test
   - nonify
   - release
+  - deploy
 
 include:
   - template: Security/SAST.gitlab-ci.yml
@@ -90,4 +91,22 @@ upload-backend-release:
   script:
     - cd backend
     - mvn deploy -DskipTests -Dmaven.repo.local=${MAVEN_REPO_PATH} -s settings.xml -Dversion.application=${VERSION} 
+
+deploy-backend:
+    stage: deploy
+    needs:
+        - upload-backend-release
+    before_script:
+        - 'command -v ssh-agent >/dev/null || ( apt-get update -y && apt-get install openssh-client -y )'
+        - eval $(ssh-agent -s)
+        - echo "${SSH_PRIVATE_KEY}" | tr -d '\r' | ssh-add -
+        - mkdir -p ~/.ssh
+        - chmod 600 ~/.ssh
+        - echo "${SSH_KNOWN_HOSTS}" >> ~/.ssh/known_hosts
+        - chmod 644 ~/.ssh/known_hosts
+    script:
+        - touch test.txt
+        - scp -o StrictHostKeyChecking=no test.txt ${DEV_USER}@${DEV_HOST}:/home/${DEV_USER}
+
+
   

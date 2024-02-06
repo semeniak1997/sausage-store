@@ -7,14 +7,12 @@ variables:
   MAVEN_REPO_PATH: ${CI_PROJECT_DIR}/.m2/repository
   JAVA_OPTS: -XX:MaxRAMPercentage=90
 
-
 stages:
   - build
   - test
   - nonify
   - release
   - deploy
-
 
 build-backend-code-job:
   stage: build
@@ -40,7 +38,6 @@ spotbugs-sast:
   artifacts:
     reports:
        sast: gl-sast-report.json
-
 
 sonarqube-backend-sast:
   stage: test
@@ -112,8 +109,4 @@ deploy-backend:
       url: http://${DEV_HOST}:80
     rules: 
       - when: manual
-
-
-
-
   

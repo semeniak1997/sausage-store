@@ -21,6 +21,10 @@ build-frontend-code-job:
     - cd frontend
     - npm install
     - npm run build
+  artifacts:
+    paths:
+      - frontend/dist/frontend/*
+
   
 
 sonarqube-frontend-sast:

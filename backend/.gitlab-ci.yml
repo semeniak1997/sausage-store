@@ -15,8 +15,6 @@ stages:
   - release
   - deploy
 
-include:
-  - template: Security/SAST.gitlab-ci.yml
 
 build-backend-code-job:
   stage: build
@@ -27,7 +25,13 @@ build-backend-code-job:
     - cd backend
     - mvn package -Dversion.application=${VERSION} -Dmaven.repo.local=${MAVEN_REPO_PATH}  
   
-  
+gitlab-sast:
+  stage: test
+  needs:
+    - build-backend-code-job
+  trigger:
+    include:
+      - template: Security/SAST.gitlab-ci.yml  
 
 spotbugs-sast:
   stage: test
@@ -88,6 +92,8 @@ upload-backend-release:
       - backend/**/*
   needs:
     - build-backend-code-job
+    - sonarqube-backend-sast
+    - gitlab-sast
   script:
     - cd backend
     - mvn deploy -DskipTests -Dmaven.repo.local=${MAVEN_REPO_PATH} -s settings.xml -Dversion.application=${VERSION} 
@@ -108,10 +114,10 @@ deploy-backend:
         - scp -o StrictHostKeyChecking=no ./backend/sausage-store-backend.service ${DEV_USER}@${DEV_HOST}:/home/${DEV_USER}/sausage-store-backend.service
         - ssh -o StrictHostKeyChecking=no ${DEV_USER}@${DEV_HOST} "export "CURRENT_VERSION=${VERSION}"; export "VERSION=${VERSION}"; export "DEV_HOST=${DEV_HOST}";export "NEXUS_REPO_URL=${NEXUS_REPO_URL}"; export "NEXUS_BACKEND=${NEXUS_BACKEND}"; export "NEXUS_REPO_USER=${NEXUS_REPO_USER}"; export "NEXUS_REPO_PASS=${NEXUS_REPO_PASS}"; setsid /bin/bash -s " < ./backend/deploy.sh
     environment:
-        name: backend
-        url: http://${DEV_HOST}
-    rules:
-        - when: manual
+      name: review/$CI_COMMIT_REF_NAME
+      url: http://${DEV_HOST}:80
+    rules: 
+      - when: manual
 
 
 

@@ -68,6 +68,7 @@ upload-frontend-release:
     - frontend/**/*
   needs:
     - build-frontend-code-job
+    - sonarqube-frontend-sast
   script:
     - cd frontend/dist
     - tar czvf sausage-store-${VERSION}.tar.gz frontend

@@ -133,20 +133,23 @@
                     </execution>
                 </executions>
             </plugin>
-            <plugin>
-        	<groupId>org.flywaydb</groupId>
-        	<artifactId>flyway-maven-plugin</artifactId>
-        	<version>8.0.5</version>
-		<configuration>
-                    <driver>org.postgresql.Driver</driver>
+	    <plugin>
+                <groupId>org.flywaydb</groupId>
+                <artifactId>flyway-maven-plugin</artifactId>
+                <version>8.0.5</version>
+                <configuration>
                     <locations>
-                        <location>classpath:db/migration</location>
+                        <location>filesystem:src/main/resources/db/migration</location>
                     </locations>
+                    <schemas>
+                        <schema>public</schema>
+                    </schemas>
                     <url>jdbc:postgresql://rc1d-37jmsli3qkokbf7v.mdb.yandexcloud.net:6432/std-025-02</url>
-                    <user>std-025-02</user>
-                    <password>${env.PSQL_PASSWORD}</password>
+                    <user>${DB_USER}</user>
+                    <password>${DB_PASS}</password>
+                    <cleanDisabled>false</cleanDisabled>
                 </configuration>
-    	    </plugin>
+            </plugin>
     	</plugins>
     </build>
 

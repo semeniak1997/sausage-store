@@ -142,12 +142,9 @@
                     <locations>
                         <location>classpath:db/migration</location>
                     </locations>
-                    <url>jdbc:postgresql://rc1d-37jmsli3qkokbf7v.mdb.yandexcloud.net:6432;database=std-025-02</url>
+                    <url>jdbc:postgresql://rc1d-37jmsli3qkokbf7v.mdb.yandexcloud.net:6432/std-025-02</url>
                     <user>std-025-02</user>
                     <password>${env.PSQL_PASSWORD}</password>
-                    <schemas>
-                        <schema>public</schema>
-                    </schemas>
                 </configuration>
     	    </plugin>
     	</plugins>

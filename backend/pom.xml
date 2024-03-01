@@ -137,11 +137,18 @@
         	<groupId>org.flywaydb</groupId>
         	<artifactId>flyway-maven-plugin</artifactId>
         	<version>8.0.5</version>
-        	<configuration>
-            	    <locations>
-                	<location>classpath:db/migration</location>
-            	    </locations>
-        	</configuration>
+		<configuration>
+                    <driver>org.postgresql.Driver</driver>
+                    <locations>
+                        <location>classpath:db/migration</location>
+                    </locations>
+                    <url>jdbc:postgresql://rc1d-37jmsli3qkokbf7v.mdb.yandexcloud.net:6432;database=std-025-02</url>
+                    <user>std-025-02</user>
+                    <password>${env.PSQL_PASSWORD}</password>
+                    <schemas>
+                        <schema>public</schema>
+                    </schemas>
+                </configuration>
     	    </plugin>
     	</plugins>
     </build>

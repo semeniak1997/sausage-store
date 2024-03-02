@@ -11,7 +11,7 @@ EnvironmentFile=/root/.db_creds
 
 Environment=SPRING_DATASOURCE_URL="jdbc:postgresql://${PSQL_HOST}:${PSQL_PORT}/${PSQL_DBNAME}"
 Environment=SPRING_DATASOURCE_USERNAME="${PSQL_USER}"
-Environment=SPRING_DATASOURCE_PASSWORD="${PSQL_PASSWORD}"
+Environment=SPRING_DATASOURCE_PASSWORD="${PSQL_PASS}"
 
 
 Environment="REPORT_PATH=/var/sausage-store/reports"

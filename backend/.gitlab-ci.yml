@@ -106,7 +106,7 @@ deploy-backend:
         - ssh -o StrictHostKeyChecking=no ${DEV_USER}@${DEV_HOST} "export "CURRENT_VERSION=${VERSION}";
           export "VERSION=${VERSION}"; export "DEV_HOST=${DEV_HOST}";export "NEXUS_REPO_URL=${NEXUS_REPO_URL}";
           export "NEXUS_BACKEND=${NEXUS_BACKEND}"; export "NEXUS_REPO_USER=${NEXUS_REPO_USER}"; export "NEXUS_REPO_PASS=${NEXUS_REPO_PASS}";
-          export "PSQL_USER=${PSQL_USER}"; export "PSQL_PASSWORD=${PSQL_PASSWORD}"; export "PSQL_HOST=${PSQL_HOST}"; export "PSQL_DBNAME=${PSQL_DBNAME}";
+          export "PSQL_USER=${PSQL_USER}"; export "PSQL_PASS=${PSQL_PASS}"; export "PSQL_HOST=${PSQL_HOST}"; export "PSQL_DBNAME=${PSQL_DBNAME}";
           export "PSQL_PORT=${PSQL_PORT}"; export "JAVA_KEYSTORE_PASS=${JAVA_KEYSTORE_PASS}"; setsid /bin/bash -s " < ./backend/deploy.sh
     environment:
       name: review/$CI_COMMIT_REF_NAME

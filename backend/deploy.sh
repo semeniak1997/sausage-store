@@ -1,5 +1,15 @@
 #!/bin/bash
 
+if [ -z "${NEXUS_REPO_USER}" ] || [ -z "${NEXUS_REPO_PASS}" ] || [ -z "${NEXUS_REPO_URL}" ] || [ -z "${NEXUS_BACKEND}" ] || [ -z "${VERSION}" ]; then
+    echo "Error: Some variables for artifacts are not defined"
+    exit 1
+fi
+
+if [ -z "${PSQL_HOST}" ] || [ -z "${PSQL_USER}" ] || [ -z "${PSQL_PASS}" ] || [ -z "${PSQL_PORT}" ] || [ -z "${PSQL_DBNAME}" ] || [ -z "${JAVA_KEYSTORE_PASS}" ] ; then
+    echo "Error: Some variables for PostgreSQL are not defined"
+    exit 1
+fi
+
 set -e
 
 sudo mv sausage-store-backend.service /opt/sausage-store/bin/backend_services/sausage-store-backend-${VERSION}.service
@@ -15,7 +25,12 @@ sudo echo -e "PSQL_HOST=\"${PSQL_HOST}"\" \
 sudo cp -f ./db_creds /root/.db_creds
 sudo rm -f ./db_creds
 
-curl -u ${NEXUS_REPO_USER}:${NEXUS_REPO_PASS} -o sausage-store-${VERSION}.jar ${NEXUS_REPO_URL}/${NEXUS_BACKEND}/com/yandex/practicum/devops/sausage-store/${VERSION}/sausage-store-${VERSION}.jar
+if ! curl --fail -u "${NEXUS_REPO_USER}:${NEXUS_REPO_PASS}" -o "sausage-store-${VERSION}.jar" "${NEXUS_REPO_URL}/${NEXUS_BACKEND}/com/yandex/practicum/devops/sausage-store/${VERSION}/sausage-store-${VERSION}.jar"; then
+    echo "Error: Download artifact failed"
+    exit 1
+fi
+
+
 sudo mv ./sausage-store-${VERSION}.jar /opt/sausage-store/bin/artifacts/sausage-store-${VERSION}.jar
 sudo ln -f /opt/sausage-store/bin/artifacts/sausage-store-${VERSION}.jar /opt/sausage-store/bin/sausage-store.jar
 

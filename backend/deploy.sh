@@ -12,8 +12,33 @@ fi
 
 set -e
 
-sudo mv sausage-store-backend.service /opt/sausage-store/bin/backend_services/sausage-store-backend-${VERSION}.service
-sudo ln -f /opt/sausage-store/bin/backend_services/sausage-store-backend-${VERSION}.service /etc/systemd/system/sausage-store-backend.service
+backend_dest="/opt/sausage-store/bin"
+artifacts_dest="$backend_dest/artifacts"
+services_dest="$backend_dest/backend_services"
+systemd_dest="/etc/systemd/system"
+
+if [ ! -d "$backend_dest" ]; then
+    sudo mkdir -p "$backend_dest"
+    sudo chown -R backend:backend "$backend_dest"
+    echo "Warning: created $backend_dest"
+fi
+
+if [ ! -d "$artifacts_dest" ]; then
+    sudo mkdir -p "$artifacts_dest"
+    sudo chown -R backend:backend "$artifacts_dest"
+    echo "Warning: created $artifacts_dest"
+fi
+
+if [ ! -d "$services_dest" ]; then
+    sudo mkdir -p "$services_dest"
+    sudo chown -R backend:backend "$services_dest"
+    echo "Warning: created $services_dest"
+fi
+
+sudo mv sausage-store-backend.service $services_dest/sausage-store-backend-${VERSION}.service
+sudo ln -f $services_dest/sausage-store-backend-${VERSION}.service $services_dest/sausage-store-backend.service
+
+sudo ln -sf $services_dest/sausage-store-backend.service $systemd_dest/sausage-store-backend.service
 
 sudo echo -e "PSQL_HOST=\"${PSQL_HOST}"\" \
     \\nPSQL_USER=\"${PSQL_USER}"\"\
@@ -30,9 +55,9 @@ if ! curl --fail -u "${NEXUS_REPO_USER}:${NEXUS_REPO_PASS}" -o "sausage-store-${
     exit 1
 fi
 
-
-sudo mv ./sausage-store-${VERSION}.jar /opt/sausage-store/bin/artifacts/sausage-store-${VERSION}.jar
-sudo ln -f /opt/sausage-store/bin/artifacts/sausage-store-${VERSION}.jar /opt/sausage-store/bin/sausage-store.jar
+sudo mv sausage-store-${VERSION}.jar $artifacts_dest/sausage-store-${VERSION}.jar
+sudo ln -sf $artifacts_dest/sausage-store-${VERSION}.jar $backend_dest/sausage-store.jar
+sudo chown backend:backend $artifacts_dest/sausage-store-${VERSION}.jar 
 
 wget "https://storage.yandexcloud.net/cloud-certs/CA.pem" -O root.crt
 
@@ -44,7 +69,15 @@ sudo /usr/lib/jvm/java-16-openjdk-amd64/bin/keytool -import -alias YandexCA \
 rm -f root.crt
 
 sudo systemctl daemon-reload
-sudo systemctl enable sausage-store-backend
-sudo systemctl restart sausage-store-backend
+sudo systemctl enable sausage-store-backend.service
+sudo systemctl restart sausage-store-backend.service
 
+sudo systemctl status sausage-store-backend.service
+status_code_backend=$?
+if [ $status_code_backend -eq 0 ]; then
+  echo "Service is running."
+else
+  echo "Service failed with code: $status_code_backend"
+  exit 1
+fi
 

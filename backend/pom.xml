@@ -144,10 +144,6 @@
                     <schemas>
                         <schema>public</schema>
                     </schemas>
-                    <url>jdbc:postgresql://rc1d-37jmsli3qkokbf7v.mdb.yandexcloud.net:6432/std-025-02</url>
-                    <user>${DB_USER}</user>
-                    <password>${DB_PASS}</password>
-                    <cleanDisabled>false</cleanDisabled>
                 </configuration>
             </plugin>
     	</plugins>

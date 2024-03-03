@@ -21,6 +21,7 @@ build-backend-code-job:
       - backend/**/*
   script:
     - cd backend
+    - export SPRING_FLYWAY_ENABLED=false
     - mvn package -Dversion.application=${VERSION} -Dmaven.repo.local=${MAVEN_REPO_PATH}  
   
 include:
@@ -44,6 +45,8 @@ sonarqube-backend-sast:
   script: 
     - >
       cd backend
+
+      export SPRING_FLYWAY_ENABLED=false
 
       mvn verify sonar:sonar 
       -Dsonar.projectKey=${SONAR_PROJECT_KEY_BACK}

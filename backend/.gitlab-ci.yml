@@ -21,6 +21,7 @@ build-backend-code-job:
       - backend/**/*
   script:
     - cd backend
+    - export SPRING_FLYWAY_ENABLED=false
     - mvn package -Dversion.application=${VERSION} -Dmaven.repo.local=${MAVEN_REPO_PATH}  
   
 include:
@@ -44,6 +45,8 @@ sonarqube-backend-sast:
   script: 
     - >
       cd backend
+
+      export SPRING_FLYWAY_ENABLED=false
 
       mvn verify sonar:sonar 
       -Dsonar.projectKey=${SONAR_PROJECT_KEY_BACK}
@@ -103,10 +106,13 @@ deploy-backend:
         - chmod 644 ~/.ssh/known_hosts
     script:
         - scp -o StrictHostKeyChecking=no ./backend/sausage-store-backend.service ${DEV_USER}@${DEV_HOST}:/home/${DEV_USER}/sausage-store-backend.service
-        - ssh -o StrictHostKeyChecking=no ${DEV_USER}@${DEV_HOST} "export "CURRENT_VERSION=${VERSION}"; export "VERSION=${VERSION}"; export "DEV_HOST=${DEV_HOST}";export "NEXUS_REPO_URL=${NEXUS_REPO_URL}"; export "NEXUS_BACKEND=${NEXUS_BACKEND}"; export "NEXUS_REPO_USER=${NEXUS_REPO_USER}"; export "NEXUS_REPO_PASS=${NEXUS_REPO_PASS}"; setsid /bin/bash -s " < ./backend/deploy.sh
+        - ssh -o StrictHostKeyChecking=no ${DEV_USER}@${DEV_HOST} "export "VERSION=${VERSION}"; 
+          export "NEXUS_REPO_URL=${NEXUS_REPO_URL}"; export "NEXUS_BACKEND=${NEXUS_BACKEND}"; export "NEXUS_REPO_USER=${NEXUS_REPO_USER}"; 
+          export "NEXUS_REPO_PASS=${NEXUS_REPO_PASS}"; 
+          export "PSQL_USER=${PSQL_USER}"; export "PSQL_PASS=${PSQL_PASS}"; export "PSQL_HOST=${PSQL_HOST}"; export "PSQL_DBNAME=${PSQL_DBNAME}"; 
+          export "PSQL_PORT=${PSQL_PORT}"; export "JAVA_KEYSTORE_PASS=${JAVA_KEYSTORE_PASS}"; setsid /bin/bash -s " < ./backend/deploy.sh
     environment:
       name: review/$CI_COMMIT_REF_NAME
       url: http://${DEV_HOST}:80
     rules: 
       - when: manual
-  

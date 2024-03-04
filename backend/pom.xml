@@ -100,6 +100,11 @@
             <artifactId>junit-vintage-engine</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+    	    <groupId>org.flywaydb</groupId>
+    	    <artifactId>flyway-core</artifactId>
+    	    <version>8.0.5</version>
+    </dependency>
     </dependencies>
 
     <build>
@@ -128,7 +133,20 @@
                     </execution>
                 </executions>
             </plugin>
-        </plugins>
+	    <plugin>
+                <groupId>org.flywaydb</groupId>
+                <artifactId>flyway-maven-plugin</artifactId>
+                <version>8.0.5</version>
+                <configuration>
+                    <locations>
+                        <location>filesystem:src/main/resources/db/migration</location>
+                    </locations>
+                    <schemas>
+                        <schema>public</schema>
+                    </schemas>
+                </configuration>
+            </plugin>
+    	</plugins>
     </build>
 
 </project>

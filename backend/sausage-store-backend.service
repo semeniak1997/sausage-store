@@ -4,13 +4,22 @@ Description=Sausage-store
 [Service]
 User=backend
 Group=backend
+
 StandardOutput=append:/var/sausage-store/logs/sausage-store-backend.log
-Restart=always
+
+EnvironmentFile=/root/.db_creds
+
+Environment=SPRING_DATASOURCE_URL="jdbc:postgresql://${PSQL_HOST}:${PSQL_PORT}/${PSQL_DBNAME}"
+Environment=SPRING_DATASOURCE_USERNAME="${PSQL_USER}"
+Environment=SPRING_DATASOURCE_PASSWORD="${PSQL_PASS}"
+
+
+Environment="REPORT_PATH=/var/sausage-store/reports"
+
 ExecStart=/usr/lib/jvm/java-16-openjdk-amd64/bin/java -jar /opt/sausage-store/bin/sausage-store.jar
 
 SuccessExitStatus=143
-
-Environment="REPORT_PATH=/var/sausage-store/reports"
+Restart=always
 
 [Install]
 WantedBy=multi-user.target

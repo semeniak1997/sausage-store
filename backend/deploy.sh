@@ -27,7 +27,7 @@ artifacts_dest="$backend_dest/artifacts"
 services_dest="$backend_dest/backend_services"
 systemd_dest="/etc/systemd/system"
 creds_dest="/root/creds"
-trust_store="/opt/trust_store"
+certs_store="/opt/certs"
 
 if [ ! -d "$backend_dest" ]; then
     sudo mkdir -p "$backend_dest"
@@ -92,17 +92,19 @@ sudo chown backend:backend $artifacts_dest/sausage-store-${VERSION}.jar
 
 wget "https://storage.yandexcloud.net/cloud-certs/CA.pem" -O YandexInternalRootCA.crt
 
-if [ ! -d "$trust_store" ]; then
-    sudo mkdir -p "$trust_store"
-    echo "Warning: created $trust_store"
+if [ ! -d "$certs_store" ]; then
+    sudo mkdir -p "$certs_store"
+    echo "Warning: created $certs_store"
 fi
 
 sudo /usr/lib/jvm/java-16-openjdk-amd64/bin/keytool -importcert -alias yandex \
-     -file YandexInternalRootCA.crt -keystore $trust_store/YATrustStore \
+     -file YandexInternalRootCA.crt -keystore $certs_store/YATrustStore \
      -storepass ${JAVA_KEYSTORE_PASS} -noprompt||true
 
 
-rm -f YandexInternalRootCA.crt
+mv -f YandexInternalRootCA.crt $certs_store/YandexInternalRootCA.crt
+chown backend:backend $certs_store/YandexInternalRootCA.crt
+chmod 600 $certs_store/YandexInternalRootCA.crt
 
 sudo systemctl daemon-reload
 sudo systemctl enable sausage-store-backend.service

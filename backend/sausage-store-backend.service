@@ -11,7 +11,7 @@ EnvironmentFile=/root/creds/.psql_creds
 EnvironmentFile=/root/creds/.mongodb_creds
 EnvironmentFile=/root/creds/.jks_creds
 
-Environment=SPRING_DATASOURCE_URL="jdbc:postgresql://${PSQL_HOST}:${PSQL_PORT}/${PSQL_DBNAME}?tls=true"
+Environment=SPRING_DATASOURCE_URL="jdbc:postgresql://${PSQL_HOST}:${PSQL_PORT}/${PSQL_DBNAME}?ssl=true&sslrootcert=/opt/sausage-store/bin/certs/YandexInternalRootCA.crt"
 Environment=SPRING_DATASOURCE_USERNAME="${PSQL_USER}"
 Environment=SPRING_DATASOURCE_PASSWORD="${PSQL_PASS}"
 
@@ -19,7 +19,7 @@ Environment=SPRING_DATA_MONGODB_URI="mongodb://${MONGO_USER}:${MONGO_PASS}@${MON
 
 Environment="REPORT_PATH=/var/sausage-store/reports"
 
-ExecStart=/usr/lib/jvm/java-16-openjdk-amd64/bin/java -jar /opt/sausage-store/bin/sausage-store.jar -Djavax.net.ssl.trustStore=/opt/trust_store/YATrustStore -Djavax.net.ssl.trustStorePassword=${JAVA_KEYSTORE_PASS}
+ExecStart=/usr/lib/jvm/java-16-openjdk-amd64/bin/java -jar /opt/sausage-store/bin/sausage-store.jar -Djavax.net.ssl.trustStore=/opt/sausage-store/bin/certs/YATrustStore -Djavax.net.ssl.trustStorePassword=${JAVA_KEYSTORE_PASS}
 
 SuccessExitStatus=143
 Restart=always

@@ -5,8 +5,18 @@ if [ -z "${NEXUS_REPO_USER}" ] || [ -z "${NEXUS_REPO_PASS}" ] || [ -z "${NEXUS_R
     exit 1
 fi
 
-if [ -z "${PSQL_HOST}" ] || [ -z "${PSQL_USER}" ] || [ -z "${PSQL_PASS}" ] || [ -z "${PSQL_PORT}" ] || [ -z "${PSQL_DBNAME}" ] || [ -z "${JAVA_KEYSTORE_PASS}" ] ; then
+if [ -z "${PSQL_HOST}" ] || [ -z "${PSQL_USER}" ] || [ -z "${PSQL_PASS}" ] || [ -z "${PSQL_PORT}" ] || [ -z "${PSQL_DBNAME}" ]; then
     echo "Error: Some variables for PostgreSQL are not defined"
+    exit 1
+fi
+
+if [ -z "${MONGO_HOST}" ] || [ -z "${MONGO_USER}" ] || [ -z "${MONGO_PASS}" ] || [ -z "${MONGO_PORT}" ] || [ -z "${MONGO_DBNAME}" ]; then
+    echo "Error: Some variables for MongoDB are not defined"
+    exit 1
+fi
+
+if [ -z "${JAVA_KEYSTORE_PASS}" ]; then
+    echo "Error: Some variables for JKS are not defined"
     exit 1
 fi
 
@@ -16,6 +26,8 @@ backend_dest="/opt/sausage-store/bin"
 artifacts_dest="$backend_dest/artifacts"
 services_dest="$backend_dest/backend_services"
 systemd_dest="/etc/systemd/system"
+creds_dest="/root/creds"
+trust_store="/opt/trust_store"
 
 if [ ! -d "$backend_dest" ]; then
     sudo mkdir -p "$backend_dest"
@@ -40,15 +52,34 @@ sudo ln -f $services_dest/sausage-store-backend-${VERSION}.service $services_des
 
 sudo ln -sf $services_dest/sausage-store-backend.service $systemd_dest/sausage-store-backend.service
 
+if [ ! -d "$creds_dest" ]; then
+    sudo mkdir -p "$creds_dest"
+    echo "Warning: created $creds_dest"
+fi
+
 sudo echo -e "PSQL_HOST=\"${PSQL_HOST}"\" \
     \\nPSQL_USER=\"${PSQL_USER}"\"\
     \\nPSQL_PASS=\"${PSQL_PASS}"\" \
     \\nPSQL_PORT=\"${PSQL_PORT}\" \
     \\nPSQL_DBNAME=\"${PSQL_DBNAME}\" \
-    > ./db_creds
+    > ./psql_creds
 
-sudo cp -f ./db_creds /root/.db_creds
-sudo rm -f ./db_creds
+sudo cp -f ./psql_creds $creds_dest/.psql_creds
+sudo rm -f ./psql_creds
+
+sudo echo -e "MONGO_HOST=\"${MONGO_HOST}"\" \
+    \\nMONGO_USER=\"${MONGO_USER}"\"\
+    \\nMONGO_PASS=\"${MONGO_PASS}"\" \
+    \\nMONGO_PORT=\"${MONGO_PORT}\" \
+    \\nMONGO_DBNAME=\"${MONGO_DBNAME}\" \
+    > ./mongodb_creds
+
+sudo cp -f ./mongodb_creds $creds_dest/.mongodb_creds
+sudo rm -f ./mongodb_creds
+
+sudo echo -e "JAVA_KEYSTORE_PASS=\"${JAVA_KEYSTORE_PASS}"\" \ > ./jks_creds
+sudo cp -f ./jks_creds $creds_dest/.jks_creds
+sudo rm -f ./jks_creds
 
 if ! curl --fail -u "${NEXUS_REPO_USER}:${NEXUS_REPO_PASS}" -o "sausage-store-${VERSION}.jar" "${NEXUS_REPO_URL}/${NEXUS_BACKEND}/com/yandex/practicum/devops/sausage-store/${VERSION}/sausage-store-${VERSION}.jar"; then
     echo "Error: Download artifact failed"
@@ -59,14 +90,19 @@ sudo mv sausage-store-${VERSION}.jar $artifacts_dest/sausage-store-${VERSION}.ja
 sudo ln -sf $artifacts_dest/sausage-store-${VERSION}.jar $backend_dest/sausage-store.jar
 sudo chown backend:backend $artifacts_dest/sausage-store-${VERSION}.jar 
 
-wget "https://storage.yandexcloud.net/cloud-certs/CA.pem" -O root.crt
+wget "https://storage.yandexcloud.net/cloud-certs/CA.pem" -O YandexInternalRootCA.crt
 
-sudo /usr/lib/jvm/java-16-openjdk-amd64/bin/keytool -import -alias YandexCA \
-    -file root.crt \
-    -keystore /etc/ssl/certs/java/cacerts \
-    -storepass ${JAVA_KEYSTORE_PASS} -noprompt||true
+if [ ! -d "$trust_store" ]; then
+    sudo mkdir -p "$trust_store"
+    echo "Warning: created $trust_store"
+fi
 
-rm -f root.crt
+sudo /usr/lib/jvm/java-16-openjdk-amd64/bin/keytool -importcert -alias yandex \
+     -file YandexInternalRootCA.crt -keystore $trust_store/YATrustStore \
+     -storepass ${JAVA_KEYSTORE_PASS} -noprompt||true
+
+
+rm -f YandexInternalRootCA.crt
 
 sudo systemctl daemon-reload
 sudo systemctl enable sausage-store-backend.service

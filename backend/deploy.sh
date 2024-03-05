@@ -59,14 +59,14 @@ sudo mv sausage-store-${VERSION}.jar $artifacts_dest/sausage-store-${VERSION}.ja
 sudo ln -sf $artifacts_dest/sausage-store-${VERSION}.jar $backend_dest/sausage-store.jar
 sudo chown backend:backend $artifacts_dest/sausage-store-${VERSION}.jar 
 
-wget "https://storage.yandexcloud.net/cloud-certs/CA.pem" -O root.crt
+#wget "https://storage.yandexcloud.net/cloud-certs/CA.pem" -O root.crt
 
-sudo /usr/lib/jvm/java-16-openjdk-amd64/bin/keytool -import -alias YandexCA \
-    -file root.crt \
-    -keystore /etc/ssl/certs/java/cacerts \
-    -storepass ${JAVA_KEYSTORE_PASS} -noprompt||true
+#sudo /usr/lib/jvm/java-16-openjdk-amd64/bin/keytool -import -alias YandexCA \
+#    -file root.crt \
+#    -keystore /etc/ssl/certs/java/cacerts \
+#    -storepass ${JAVA_KEYSTORE_PASS} -noprompt||true
 
-rm -f root.crt
+#rm -f root.crt
 
 sudo systemctl daemon-reload
 sudo systemctl enable sausage-store-backend.service

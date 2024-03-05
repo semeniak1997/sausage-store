@@ -1,24 +1,26 @@
 #!/bin/bash
 
-if [ -z "${NEXUS_REPO_USER}" ] || [ -z "${NEXUS_REPO_PASS}" ] || [ -z "${NEXUS_REPO_URL}" ] || [ -z "${NEXUS_BACKEND}" ] || [ -z "${VERSION}" ]; then
-    echo "Error: Some variables for artifacts are not defined"
-    exit 1
-fi
+ARTIFACT_VARS=("NEXUS_REPO_USER" "NEXUS_REPO_PASS" "NEXUS_REPO_URL" "NEXUS_BACKEND" "VERSION")
+POSTGRES_VARS=("PSQL_HOST" "PSQL_USER" "PSQL_PASS" "PSQL_PORT" "PSQL_DBNAME")
+MONGO_VARS=("MONGO_HOST" "MONGO_USER" "MONGO_PASS" "MONGO_PORT" "MONGO_DBNAME")
+JKS_VARS=("JAVA_KEYSTORE_PASS")
 
-if [ -z "${PSQL_HOST}" ] || [ -z "${PSQL_USER}" ] || [ -z "${PSQL_PASS}" ] || [ -z "${PSQL_PORT}" ] || [ -z "${PSQL_DBNAME}" ]; then
-    echo "Error: Some variables for PostgreSQL are not defined"
-    exit 1
-fi
+check_vars() {
+    local vars=("${!1}")
 
-if [ -z "${MONGO_HOST}" ] || [ -z "${MONGO_USER}" ] || [ -z "${MONGO_PASS}" ] || [ -z "${MONGO_PORT}" ] || [ -z "${MONGO_DBNAME}" ]; then
-    echo "Error: Some variables for MongoDB are not defined"
-    exit 1
-fi
+    for var in "${vars[@]}"; do
+        if [ -z "${!var}" ]; then
+            echo "Error: Some variables for $2 are not defined"
+            exit 1
+        fi
+    done
+}
 
-if [ -z "${JAVA_KEYSTORE_PASS}" ]; then
-    echo "Error: Some variables for JKS are not defined"
-    exit 1
-fi
+check_vars ARTIFACT_VARS "artifacts"
+check_vars POSTGRES_VARS "PostgreSQL"
+check_vars MONGO_VARS "MongoDB"
+check_vars JKS_VARS "JKS"
+echo "All required variables are defined"
 
 set -e
 

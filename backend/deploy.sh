@@ -90,7 +90,10 @@ sudo mv sausage-store-${VERSION}.jar $artifacts_dest/sausage-store-${VERSION}.ja
 sudo ln -sf $artifacts_dest/sausage-store-${VERSION}.jar $backend_dest/sausage-store.jar
 sudo chown backend:backend $artifacts_dest/sausage-store-${VERSION}.jar 
 
-wget "https://storage.yandexcloud.net/cloud-certs/CA.pem" -O YandexInternalRootCA.crt
+if ! curl --fail -o YandexInternalRootCA.crt https://storage.yandexcloud.net/cloud-certs/CA.pem ; then
+    echo "Error: Download CA.pem failed"
+    exit 1
+fi
 
 if [ ! -d "$certs_store" ]; then
     sudo mkdir -p "$certs_store"
@@ -101,7 +104,6 @@ fi
 sudo /usr/lib/jvm/java-16-openjdk-amd64/bin/keytool -importcert -alias yandex \
      -file YandexInternalRootCA.crt -keystore $certs_store/YATrustStore \
      -storepass ${JAVA_KEYSTORE_PASS} -noprompt||true
-
 
 sudo mv -f YandexInternalRootCA.crt $certs_store/YandexInternalRootCA.crt
 sudo chown backend:backend $certs_store/YandexInternalRootCA.crt

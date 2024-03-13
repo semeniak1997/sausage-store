@@ -12,3 +12,4 @@ frontend/Dockerfile
 frontend/default.conf
 frontend/default_orig.conf
 frontend/nginx.conf
+frontend/deploy_orig.sh

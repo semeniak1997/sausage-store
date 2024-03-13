@@ -1,20 +1,18 @@
 #! /bin/bash
+
 set -xe
+sudo docker login -u ${CI_REGISTRY_USER} -p${CI_REGISTRY_PASSWORD} ${CI_REGISTRY}
+sudo docker network create -d bridge sausage_network || true
+sudo docker rm -f sausage-frontend || true
 
-sudo cp -rf sausage-store.conf /etc/nginx/sites-enabled/sausage-store.conf
-sudo ln -sf /etc/nginx/sites-available/sausage-store.conf /etc/nginx/sites-enabled/sausage-store.conf 
+while ! sudo docker ps | grep -q sausage-backend; do
+    echo "Waiting for sausage-backend container to start..."
+    sleep 5
+done
 
-sudo rm -rf /home/student/sausage-store-front.tar.gz
-
-cd /home/student
-curl -u ${NEXUS_REPO_USER}:${NEXUS_REPO_PASS} -o sausage-store-front.tar.gz ${NEXUS_REPO_URL}/${NEXUS_FRONTEND}/${VERSION}/sausage-store-${VERSION}.tar.gz
-
-sudo rm -rf /home/student/frontend
-tar -zxf ./sausage-store-front.tar.gz ||true
-sudo chown -R www-data:www-data ./frontend
-sudo mkdir -p /opt/sausage-store/static/dist/frontend
-sudo cp -rf ./frontend/* /opt/sausage-store/static/dist/frontend
-
-sudo systemctl daemon-reload
-sudo systemctl enable nginx
-sudo systemctl restart nginx
+sudo docker run --rm -d --name sausage-frontend \
+     --restart=on-failure:10 \
+     -v "/tmp/${CI_PROJECT_DIR}/default.conf:/etc/nginx/conf.d/default.conf" \
+     --network=sausage_network \
+     -p 80:80 \
+     "${CI_REGISTRY_IMAGE}"/sausage-frontend:latest 

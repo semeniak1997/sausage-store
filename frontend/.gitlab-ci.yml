@@ -7,93 +7,66 @@ variables:
 
 stages:
   - build
-  - test
-  - nonify
   - release
   - deploy
 
 build-frontend-code-job:
   stage: build
-  only:
-    changes:
-      - frontend/**/*
+  image:
+    name: gcr.io/kaniko-project/executor:v1.9.0-debug
+    entrypoint: [""]
   script:
-    - cd frontend
-    - npm install
-    - npm run build
-  artifacts:
-    paths:
-      - frontend/dist/frontend/*
+    - echo "test"
+    - /kaniko/executor
+      --context "${CI_PROJECT_DIR}/frontend"
+      --dockerfile "${CI_PROJECT_DIR}/frontend/Dockerfile"
+      --destination "${CI_REGISTRY_IMAGE}/sausage-frontend:$CI_COMMIT_SHA"
+      --build-arg VERSION=$VERSION
+      --cache=true
 
-sonarqube-frontend-sast:
-  stage: test
-  script: 
-    - >
-      cd frontend
 
-      sonar-scanner
-      -Dsonar.projectKey=${SONAR_PROJECT_KEY_FRONT}
-      -Dsonar.host.url=${SONARQUBE_URL}
-      -Dsonar.login=${SONAR_LOGIN_FRONT}
-      -Dsonar.projectName=${SONAR_POJECT_NAME_FRONT}
-      -Dsonar.sources=.
-  needs:
-    - build-frontend-code-job
-  image: sonarsource/sonar-scanner-cli:latest
-  variables:
-    SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"  
-  cache:
-    key: "${CI_JOB_NAME}"
-    paths:
-      - .sonar/cache
-
-telegram-notification-frontend:
-  stage: nonify
-  only:
-    changes:
-      - frontend/**
-    variables:
-      - $CI_COMMIT_MESSAGE =~ /all tests passed/
-  script:
-    - >
-      curl -X POST -H 'Content-type: application/json' \
-        --data "{\"chat_id\": \"-1002007326342\", \"text\": \"Никита Семеняк собрал frontend. URL для скачивания артефактов: ($CI_PROJECT_URL/-/jobs/artifacts/$CI_COMMIT_SHA/download?job=build-frontend-code-job)\"}" \
-        https://api.telegram.org/bot$TELEGRAM_KEY/sendMessage
-  needs:
-    - build-frontend-code-job
-    - sonarqube-frontend-sast
 
 upload-frontend-release:
   stage: release
-  only:
-    changes:
-    - frontend/**/*
   needs:
     - build-frontend-code-job
-    - sonarqube-frontend-sast
+  variables:
+    GIT_STRATEGY: none
+  image:
+    name: gcr.io/go-containerregistry/crane:debug
+    entrypoint: [ "" ]
+  cache: [ ]
+  before_script:
+    - crane auth login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
   script:
-    - cd frontend/dist
-    - tar czvf sausage-store-${VERSION}.tar.gz frontend
-    - curl -v -u "${NEXUS_REPO_USER}:${NEXUS_REPO_PASS}" --upload-file sausage-store-${VERSION}.tar.gz ${NEXUS_REPO_URL}/${NEXUS_FRONTEND}/${VERSION}/sausage-store-${VERSION}.tar.gz
+    - crane tag $CI_REGISTRY_IMAGE/sausage-frontend:$CI_COMMIT_SHA latest 
 
 deploy-frontend:
     stage: deploy
     needs:
         - upload-frontend-release
+    image: alpine:3.18
     before_script:
-        - 'command -v ssh-agent >/dev/null || ( apt-get update -y && apt-get install openssh-client -y )'
+        - apk add openssh-client bash
         - eval $(ssh-agent -s)
         - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
         - mkdir -p ~/.ssh
-        - chmod 600 ~/.ssh
-        - echo "$SSH_KNOWN_HOSTS" >> ~/.ssh/known_hosts
+        - chmod 700 ~/.ssh
+        - echo "${SSH_KNOWN_HOSTS}" >> ~/.ssh/known_hosts
         - chmod 644 ~/.ssh/known_hosts
     script:
-        - scp -o StrictHostKeyChecking=no ./frontend/nginx.conf ${DEV_USER}@${DEV_HOST}:/home/${DEV_USER}/sausage-store.conf
-        - ssh -o StrictHostKeyChecking=no ${DEV_USER}@${DEV_HOST} "export "CURRENT_VERSION=${VERSION}"; export "VERSION=${VERSION}"; export "DEV_HOST=${DEV_HOST}"; export "NEXUS_REPO_URL=${NEXUS_REPO_URL}"; export "NEXUS_FRONTEND=${NEXUS_FRONTEND}"; export "NEXUS_REPO_USER=${NEXUS_REPO_USER}"; export "NEXUS_REPO_PASS=${NEXUS_REPO_PASS}"; setsid /bin/bash -s " < ./frontend/deploy.sh
+        - ssh -o StrictHostKeyChecking=no ${DEV_USER}@${DEV_HOST} "mkdir -p /tmp/${CI_PROJECT_DIR}/frontend/"
+        - scp -o StrictHostKeyChecking=no -f ./frontend/default.conf ${DEV_USER}@${DEV_HOST}:/tmp/${CI_PROJECT_DIR}/frontend/default.conf 
+        - ssh -o StrictHostKeyChecking=no ${DEV_USER}@${DEV_HOST} "export "VERSION=${VERSION}";
+          export "CI_REGISTRY=${CI_REGISTRY}";
+          export "CI_REGISTRY_USER=${CI_REGISTRY_USER}";
+          export "CI_REGISTRY_PASSWORD=${CI_REGISTRY_PASSWORD}";
+          export "CI_REGISTRY_IMAGE=${CI_REGISTRY_IMAGE}";
+          export "CI_PROJECT_DIR=${CI_PROJECT_DIR}";
+          setsid /bin/bash -s " < ./frontend/deploy.sh
     environment:
-      name: review/$CI_COMMIT_REF_NAME
-      url: http://${DEV_HOST}:80
+        name: review/$CI_COMMIT_REF_NAME
+        url: http://${DEV_HOST}:80
     rules: 
       - when: manual
 

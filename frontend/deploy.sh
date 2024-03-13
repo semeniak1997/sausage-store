@@ -11,7 +11,7 @@ while ! sudo docker ps | grep -q sausage-backend; do
 done
 
 sudo docker run --rm -d --name sausage-frontend \
-     -v "/tmp/${CI_PROJECT_DIR}/default.conf:/etc/nginx/conf.d/default.conf" \
+     -v "/home/student/frontend/default.conf:/etc/nginx/conf.d/default.conf" \
      --network=sausage_network \
      -p 80:80 \
      "${CI_REGISTRY_IMAGE}"/sausage-frontend:latest 

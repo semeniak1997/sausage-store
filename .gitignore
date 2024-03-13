@@ -8,7 +8,5 @@ backend/.psql_creds
 backend/Docker_orig
 backend/deploy_orig.sh
 backend/sausage-store.jar
-frontend/default.conf
 frontend/default_orig.conf
-frontend/nginx.conf
 frontend/deploy_orig.sh

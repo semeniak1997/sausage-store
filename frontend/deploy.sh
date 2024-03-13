@@ -11,7 +11,6 @@ while ! sudo docker ps | grep -q sausage-backend; do
 done
 
 sudo docker run --rm -d --name sausage-frontend \
-     --restart=on-failure:10 \
      -v "/tmp/${CI_PROJECT_DIR}/default.conf:/etc/nginx/conf.d/default.conf" \
      --network=sausage_network \
      -p 80:80 \

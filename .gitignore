@@ -1,2 +1,14 @@
 .idea/
 .vscode/
+backend/.env
+backend/.gitlab-ci_orig.yml
+backend/.jks_creds
+backend/.mongodb_creds
+backend/.psql_creds
+backend/Docker_orig
+backend/deploy_orig.sh
+backend/sausage-store.jar
+frontend/Dockerfile
+frontend/default.conf
+frontend/default_orig.conf
+frontend/nginx.conf

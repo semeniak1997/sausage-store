@@ -47,17 +47,29 @@ upload-backend-release:
     - crane tag $CI_REGISTRY_IMAGE/sausage-backend:$CI_COMMIT_SHA latest 
 
 deploy-backend:
-    stage: deploy
-    image: alpine:3.18
-    needs:
+  stage: deploy
+  needs:
       - upload-backend-release
-    before_script:
+  image: alpine:3.18
+  before_script:
       - apk add openssh-client bash
       - eval $(ssh-agent -s)
       - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
       - mkdir -p ~/.ssh
       - chmod 700 ~/.ssh
-      - echo "$SSH_KNOWN_HOSTS" >> ~/.ssh/known_hosts
+      - echo "${SSH_KNOWN_HOSTS}" >> ~/.ssh/known_hosts
       - chmod 644 ~/.ssh/known_hosts
-      - envsubst < ./backend/deploy.sh|ssh ${DEPLOY_USER}@${DEPLOY_HOST}
+  script: 
+      - ssh -o StrictHostKeyChecking=no ${DEV_USER}@${DEV_HOST} "export "VERSION=${VERSION}"; 
+        export "SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL}";  
+        export "SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}"; 
+        export "SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}";
+        export "SPRING_DATA_MONGODB_URI=${SPRING_DATA_MONGODB_URI}"; 
+        setsid /bin/bash -s " < ./backend/deploy.sh
+  environment:
+      name: review/$CI_COMMIT_REF_NAME
+      url: http://${DEV_HOST}:80
+  rules: 
+    - when: manual
+
     

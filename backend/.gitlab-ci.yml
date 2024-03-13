@@ -60,7 +60,11 @@ deploy-backend:
       - echo "${SSH_KNOWN_HOSTS}" >> ~/.ssh/known_hosts
       - chmod 644 ~/.ssh/known_hosts
   script: 
-      - ssh -o StrictHostKeyChecking=no ${DEV_USER}@${DEV_HOST} "export "VERSION=${VERSION}"; 
+      - ssh -o StrictHostKeyChecking=no ${DEV_USER}@${DEV_HOST} "export "VERSION=${VERSION}";
+        export "CI_REGISTRY=${CI_REGISTRY}";
+        export "CI_REGISTRY_USER=${CI_REGISTRY_USER}";
+        export "CI_REGISTRY_PASSWORD=${CI_REGISTRY_PASSWORD}";
+        export "CI_REGISTRY_IMAGE=${CI_REGISTRY_IMAGE}";
         export "SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL}";  
         export "SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}"; 
         export "SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}";

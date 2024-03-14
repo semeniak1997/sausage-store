@@ -48,7 +48,6 @@ sonarqube-frontend-sast:
     paths:
       - .sonar/cache
 
-
 telegram-notification-frontend:
   stage: nonify
   only:
@@ -64,7 +63,6 @@ telegram-notification-frontend:
   needs:
     - build-frontend-code-job
     - sonarqube-frontend-sast
-
 
 upload-frontend-release:
   stage: release
@@ -96,7 +94,8 @@ deploy-frontend:
         - echo "${SSH_KNOWN_HOSTS}" >> ~/.ssh/known_hosts
         - chmod 644 ~/.ssh/known_hosts
     script:
-        - ssh -o StrictHostKeyChecking=no ${DEV_USER}@${DEV_HOST} "mkdir -p /home/student/frontend/"
+        - ssh -o StrictHostKeyChecking=no ${DEV_USER}@${DEV_HOST} "rm -rf /home/student/frontend"
+        - ssh -o StrictHostKeyChecking=no ${DEV_USER}@${DEV_HOST} "mkdir -p /home/student/frontend"
         - scp -o StrictHostKeyChecking=no ${CI_PROJECT_DIR}/frontend/default.conf ${DEV_USER}@${DEV_HOST}:/home/student/frontend/default.conf 
         - envsubst < ./frontend/deploy.sh|ssh ${DEV_USER}@${DEV_HOST} 
     environment:

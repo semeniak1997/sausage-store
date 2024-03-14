@@ -67,7 +67,6 @@ sonarqube-backend-sast:
     paths:
       - .sonar/cache
 
-
 upload-backend-release:
   stage: release
   needs:

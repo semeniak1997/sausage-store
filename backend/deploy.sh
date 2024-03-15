@@ -4,7 +4,7 @@ set -e
 sudo docker login -u ${CI_REGISTRY_USER} -p${CI_REGISTRY_PASSWORD} ${CI_REGISTRY}
 sudo docker network create -d bridge sausage_network || true
 sudo docker rm -f sausage-backend || true
-sudo docker run --rm -d --name sausage-backend \
+sudo docker run --restart=on-failure:10 -d --name sausage-backend \
      --env SPRING_DATASOURCE_URL="jdbc:postgresql://${PSQL_HOST}:${PSQL_PORT}/${PSQL_DBNAME}" \
      --env SPRING_DATASOURCE_USERNAME="${PSQL_USER}" \
      --env SPRING_DATASOURCE_PASSWORD="${PSQL_PASS}" \
@@ -12,4 +12,4 @@ sudo docker run --rm -d --name sausage-backend \
      --env REPORT_PATH=/app/report \
      --env SPRING_FLYWAY_ENABLED=false \
      --network=sausage_network \
-     "${CI_REGISTRY_IMAGE}"/sausage-backend:latest 
+     "${CI_REGISTRY_IMAGE}"/sausage-backend:$CI_COMMIT_SHA 

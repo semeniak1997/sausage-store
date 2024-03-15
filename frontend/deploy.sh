@@ -10,8 +10,8 @@ while ! sudo docker ps | grep -q sausage-backend; do
     sleep 5
 done
 
-sudo docker run --rm -d --name sausage-frontend \
+sudo docker run --restart=on-failure:10 -d --name sausage-frontend \
      -v "/home/student/frontend/default.conf:/etc/nginx/conf.d/default.conf" \
      --network=sausage_network \
      -p 80:80 \
-     "${CI_REGISTRY_IMAGE}"/sausage-frontend:latest 
+     "${CI_REGISTRY_IMAGE}"/sausage-frontend:$CI_COMMIT_SHA

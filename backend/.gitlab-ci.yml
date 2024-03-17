@@ -10,19 +10,22 @@ variables:
 stages:
   - build
   - test
-  - nonify
   - release
   - deploy
 
 build-backend-code-job:
   stage: build
-  only:
-    changes:
-      - backend/**/*
+  image:
+    name: gcr.io/kaniko-project/executor:v1.9.0-debug
+    entrypoint: [""]
   script:
-    - cd backend
-    - export SPRING_FLYWAY_ENABLED=false
-    - mvn package -Dversion.application=${VERSION} -Dmaven.repo.local=${MAVEN_REPO_PATH}  
+    - echo "test"
+    - /kaniko/executor
+      --context "${CI_PROJECT_DIR}/backend"
+      --dockerfile "${CI_PROJECT_DIR}/backend/Dockerfile"
+      --destination "${CI_REGISTRY_IMAGE}/sausage-backend:$CI_COMMIT_SHA"
+      --build-arg VERSION=$VERSION
+      --cache=true  
   
 include:
   - template: Security/SAST.gitlab-ci.yml  
@@ -64,58 +67,41 @@ sonarqube-backend-sast:
     paths:
       - .sonar/cache
 
-telegram-notification-backend:
-  stage: nonify
-  only:
-    changes:
-      - backend/**
-    variables:
-      - $CI_COMMIT_MESSAGE =~ /all tests passed/
-  script:
-    - >
-      curl -X POST -H 'Content-type: application/json' \
-        --data "{\"chat_id\": \"-1002007326342\", \"text\": \"Никита Семеняк собрал backend. URL для скачивания артефактов: ($CI_PROJECT_URL/-/jobs/artifacts/$CI_COMMIT_SHA/download?job=build-backend-code-job)\"}" \
-        https://api.telegram.org/bot$TELEGRAM_KEY/sendMessage
-  needs:
-    - build-backend-code-job
-    - sonarqube-backend-sast
-
 upload-backend-release:
   stage: release
-  only:
-    changes:
-      - backend/**/*
   needs:
     - build-backend-code-job
     - sonarqube-backend-sast
+  variables:
+    GIT_STRATEGY: none
+  image:
+    name: gcr.io/go-containerregistry/crane:debug
+    entrypoint: [ "" ]
+  cache: [ ]
+  before_script:
+    - crane auth login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
   script:
-    - cd backend
-    - mvn deploy -DskipTests -Dmaven.repo.local=${MAVEN_REPO_PATH} -s settings.xml -Dversion.application=${VERSION} 
+    - crane tag $CI_REGISTRY_IMAGE/sausage-backend:$CI_COMMIT_SHA $CI_COMMIT_SHA
 
 deploy-backend:
-    stage: deploy
-    needs:
-        - upload-backend-release
-    before_script:
-        - 'command -v ssh-agent >/dev/null || ( apt-get update -y && apt-get install openssh-client -y )'
-        - eval $(ssh-agent -s)
-        - echo "${SSH_PRIVATE_KEY}" | tr -d '\r' | ssh-add -
-        - mkdir -p ~/.ssh
-        - chmod 600 ~/.ssh
-        - echo "${SSH_KNOWN_HOSTS}" >> ~/.ssh/known_hosts
-        - chmod 644 ~/.ssh/known_hosts
-    script:
-        - scp -o StrictHostKeyChecking=no ./backend/sausage-store-backend.service ${DEV_USER}@${DEV_HOST}:/home/${DEV_USER}/sausage-store-backend.service
-        - ssh -o StrictHostKeyChecking=no ${DEV_USER}@${DEV_HOST} "export "VERSION=${VERSION}"; 
-          export "NEXUS_REPO_URL=${NEXUS_REPO_URL}"; export "NEXUS_BACKEND=${NEXUS_BACKEND}"; export "NEXUS_REPO_USER=${NEXUS_REPO_USER}"; 
-          export "NEXUS_REPO_PASS=${NEXUS_REPO_PASS}"; 
-          export "PSQL_USER=${PSQL_USER}"; export "PSQL_PASS=${PSQL_PASS}"; export "PSQL_HOST=${PSQL_HOST}"; 
-          export "PSQL_DBNAME=${PSQL_DBNAME}"; export "PSQL_PORT=${PSQL_PORT}"; 
-          export "MONGO_USER=${MONGO_USER}"; export "MONGO_PASS=${MONGO_PASS}"; export "MONGO_HOST=${MONGO_HOST}";
-          export "MONGO_DBNAME=${MONGO_DBNAME}"; export "MONGO_PORT=${MONGO_PORT}"; 
-          export "JAVA_KEYSTORE_PASS=${JAVA_KEYSTORE_PASS}"; setsid /bin/bash -s " < ./backend/deploy.sh
-    environment:
+  stage: deploy
+  needs:
+      - upload-backend-release
+  image: alpine:3.18
+  before_script:
+      - apk add openssh-client bash gettext
+      - eval $(ssh-agent -s)
+      - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+      - mkdir -p ~/.ssh
+      - chmod 700 ~/.ssh
+      - echo "${SSH_KNOWN_HOSTS}" >> ~/.ssh/known_hosts
+      - chmod 644 ~/.ssh/known_hosts
+  script: 
+      - envsubst < ./backend/deploy.sh|ssh ${DEV_USER}@${DEV_HOST}
+  environment:
       name: review/$CI_COMMIT_REF_NAME
       url: http://${DEV_HOST}:80
-    rules: 
-      - when: manual
+  rules: 
+    - when: manual
+
+    

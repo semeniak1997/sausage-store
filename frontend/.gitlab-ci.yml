@@ -14,16 +14,17 @@ stages:
 
 build-frontend-code-job:
   stage: build
-  only:
-    changes:
-      - frontend/**/*
+  image:
+    name: gcr.io/kaniko-project/executor:v1.9.0-debug
+    entrypoint: [""]
   script:
-    - cd frontend
-    - npm install
-    - npm run build
-  artifacts:
-    paths:
-      - frontend/dist/frontend/*
+    - echo "test"
+    - /kaniko/executor
+      --context "${CI_PROJECT_DIR}/frontend"
+      --dockerfile "${CI_PROJECT_DIR}/frontend/Dockerfile"
+      --destination "${CI_REGISTRY_IMAGE}/sausage-frontend:$CI_COMMIT_SHA"
+      --build-arg VERSION=$VERSION
+      --cache=true
 
 sonarqube-frontend-sast:
   stage: test
@@ -65,35 +66,41 @@ telegram-notification-frontend:
 
 upload-frontend-release:
   stage: release
-  only:
-    changes:
-    - frontend/**/*
   needs:
     - build-frontend-code-job
     - sonarqube-frontend-sast
+  variables:
+    GIT_STRATEGY: none
+  image:
+    name: gcr.io/go-containerregistry/crane:debug
+    entrypoint: [ "" ]
+  cache: [ ]
+  before_script:
+    - crane auth login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
   script:
-    - cd frontend/dist
-    - tar czvf sausage-store-${VERSION}.tar.gz frontend
-    - curl -v -u "${NEXUS_REPO_USER}:${NEXUS_REPO_PASS}" --upload-file sausage-store-${VERSION}.tar.gz ${NEXUS_REPO_URL}/${NEXUS_FRONTEND}/${VERSION}/sausage-store-${VERSION}.tar.gz
+    - crane tag $CI_REGISTRY_IMAGE/sausage-frontend:$CI_COMMIT_SHA $CI_COMMIT_SHA 
 
 deploy-frontend:
     stage: deploy
     needs:
         - upload-frontend-release
+    image: alpine:3.18
     before_script:
-        - 'command -v ssh-agent >/dev/null || ( apt-get update -y && apt-get install openssh-client -y )'
+        - apk add openssh-client bash gettext
         - eval $(ssh-agent -s)
         - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
         - mkdir -p ~/.ssh
-        - chmod 600 ~/.ssh
-        - echo "$SSH_KNOWN_HOSTS" >> ~/.ssh/known_hosts
+        - chmod 700 ~/.ssh
+        - echo "${SSH_KNOWN_HOSTS}" >> ~/.ssh/known_hosts
         - chmod 644 ~/.ssh/known_hosts
     script:
-        - scp -o StrictHostKeyChecking=no ./frontend/nginx.conf ${DEV_USER}@${DEV_HOST}:/home/${DEV_USER}/sausage-store.conf
-        - ssh -o StrictHostKeyChecking=no ${DEV_USER}@${DEV_HOST} "export "CURRENT_VERSION=${VERSION}"; export "VERSION=${VERSION}"; export "DEV_HOST=${DEV_HOST}"; export "NEXUS_REPO_URL=${NEXUS_REPO_URL}"; export "NEXUS_FRONTEND=${NEXUS_FRONTEND}"; export "NEXUS_REPO_USER=${NEXUS_REPO_USER}"; export "NEXUS_REPO_PASS=${NEXUS_REPO_PASS}"; setsid /bin/bash -s " < ./frontend/deploy.sh
+        - ssh -o StrictHostKeyChecking=no ${DEV_USER}@${DEV_HOST} "rm -rf /home/student/frontend"
+        - ssh -o StrictHostKeyChecking=no ${DEV_USER}@${DEV_HOST} "mkdir -p /home/student/frontend"
+        - scp -o StrictHostKeyChecking=no ${CI_PROJECT_DIR}/frontend/default.conf ${DEV_USER}@${DEV_HOST}:/home/student/frontend/default.conf 
+        - envsubst < ./frontend/deploy.sh|ssh ${DEV_USER}@${DEV_HOST} 
     environment:
-      name: review/$CI_COMMIT_REF_NAME
-      url: http://${DEV_HOST}:80
+        name: review/$CI_COMMIT_REF_NAME
+        url: http://${DEV_HOST}:80
     rules: 
       - when: manual
 

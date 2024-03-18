@@ -87,7 +87,7 @@ deploy-backend:
   stage: deploy
   needs:
       - upload-backend-release
-  image: alpine:3.18
+  image: vault:1.11.3
   before_script:
       - apk add openssh-client bash gettext
       - eval $(ssh-agent -s)
@@ -97,7 +97,7 @@ deploy-backend:
       - echo "${SSH_KNOWN_HOSTS}" >> ~/.ssh/known_hosts
       - chmod 644 ~/.ssh/known_hosts
   script: 
-      - envsubst < ./backend/deploy.sh|ssh ${DEV_USER}@${DEV_HOST}
+      - export SPRING_DATASOURCE_PASSWORD=$(vault kv get -field=spring.datasource.password secret/sausage-store) && envsubst < ./backend/deploy.sh | ssh ${DEV_USER}@${DEV_HOST}  envsubst < ./backend/deploy.sh|ssh ${DEV_USER}@${DEV_HOST}
   environment:
       name: review/$CI_COMMIT_REF_NAME
       url: http://${DEV_HOST}:80

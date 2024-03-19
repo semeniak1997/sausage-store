@@ -4,6 +4,7 @@ WORKDIR /usr/src/app
 COPY ./src ./src
 COPY *.xml ./
 RUN wget -O  YandexInternalRootCA.crt https://storage.yandexcloud.net/cloud-certs/CA.pem \
+    && export "SPRING_CLOUD_VAULT_ENABLED=false" \
     && mvn package -Dversion.application=${VERSION} -Dmaven.test.skip=true
 
 FROM bellsoft/liberica-runtime-container:jre-17-slim-musl

@@ -104,8 +104,8 @@ deploy-backend:
       - echo "PSQL_HOST=${PSQL_HOST}" >> deploy.env
       - echo "PSQL_PORT=${PSQL_PORT}" >> deploy.env
       - echo "PSQL_DBNAME=${PSQL_DBNAME}" >> deploy.env
-      - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-      - docker --context remote compose --env-file deploy.env up sausage-backend -d --pull "always" --force-recreate
+      - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin $CI_REGISTRY
+      - docker --context remote compose --env-file deploy.env up backend -d --pull "always" --force-recreate
   environment:
       name: review/$CI_COMMIT_REF_NAME
       url: http://${DEV_HOST}:80

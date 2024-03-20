@@ -26,6 +26,14 @@ build-frontend-code-job:
       --build-arg VERSION=$VERSION
       --cache=true
 
+gitlab-sast:
+  stage: test
+  needs:
+    - build-frontend-code-job
+  trigger:
+    include:
+      - template: Security/SAST.gitlab-ci.yml
+
 sonarqube-frontend-sast:
   stage: test
   script: 

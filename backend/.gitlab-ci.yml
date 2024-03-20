@@ -87,17 +87,25 @@ deploy-backend:
   stage: deploy
   needs:
       - upload-backend-release
-  image: alpine:3.18
+  image: docker:24.0.7-alpine3.19
   before_script:
-      - apk add openssh-client bash gettext
+      - apk add docker-cli-compose openssh-client bash gettext 
       - eval $(ssh-agent -s)
       - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
       - mkdir -p ~/.ssh
       - chmod 700 ~/.ssh
       - echo "${SSH_KNOWN_HOSTS}" >> ~/.ssh/known_hosts
       - chmod 644 ~/.ssh/known_hosts
+      - docker context create remote --description "remote ssh" --docker "host=ssh://${DEV_USER}@${DEV_HOST}"
   script: 
-      - envsubst < ./backend/deploy.sh|ssh ${DEV_USER}@${DEV_HOST}
+      - echo "VERSION=$CI_COMMIT_SHA" >> deploy.env
+      - echo "PSQL_USER=${PSQL_USER}" >> deploy.env
+      - echo "PSQL_PASS=${PSQL_PASS}" >> deploy.env
+      - echo "PSQL_HOST=${PSQL_HOST}" >> deploy.env
+      - echo "PSQL_PORT=${PSQL_PORT}" >> deploy.env
+      - echo "PSQL_DBNAME=${PSQL_DBNAME}" >> deploy.env
+      - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+      - docker --context remote compose --env-file deploy.env up sausage-backend -d --pull "always" --force-recreate
   environment:
       name: review/$CI_COMMIT_REF_NAME
       url: http://${DEV_HOST}:80

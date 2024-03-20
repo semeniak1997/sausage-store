@@ -104,6 +104,11 @@ deploy-backend:
       - echo "PSQL_HOST=${PSQL_HOST}" >> deploy.env
       - echo "PSQL_PORT=${PSQL_PORT}" >> deploy.env
       - echo "PSQL_DBNAME=${PSQL_DBNAME}" >> deploy.env
+      - echo "MONGO_USER=${MONGO_USER}" >> deploy.env
+      - echo "MONGO_PASS=${MONGO_PASS}" >> deploy.env
+      - echo "MONGO_HOST=${MONGO_HOST}" >> deploy.env
+      - echo "MONGO_PORT=${MONGO_PORT}" >> deploy.env
+      - echo "MONGO_DBNAME=${MONGO_DBNAME}" >> deploy.env
       - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin $CI_REGISTRY
       - docker --context remote compose --env-file deploy.env up backend -d --pull "always" --force-recreate
   environment:

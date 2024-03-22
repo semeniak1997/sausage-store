@@ -26,6 +26,14 @@ build-frontend-code-job:
       --build-arg VERSION=$VERSION
       --cache=true
 
+gitlab-sast:
+  stage: test
+  needs:
+    - build-frontend-code-job
+  trigger:
+    include:
+      - template: Security/SAST.gitlab-ci.yml
+
 sonarqube-frontend-sast:
   stage: test
   script: 
@@ -84,20 +92,20 @@ deploy-frontend:
     stage: deploy
     needs:
         - upload-frontend-release
-    image: alpine:3.18
+    image: docker:24.0.7-alpine3.19
     before_script:
-        - apk add openssh-client bash gettext
+        - apk add docker-cli-compose openssh-client bash gettext
         - eval $(ssh-agent -s)
         - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
         - mkdir -p ~/.ssh
         - chmod 700 ~/.ssh
         - echo "${SSH_KNOWN_HOSTS}" >> ~/.ssh/known_hosts
         - chmod 644 ~/.ssh/known_hosts
+        - docker context create remote --description "remote ssh" --docker "host=ssh://${DEV_USER}@${DEV_HOST}"
     script:
-        - ssh -o StrictHostKeyChecking=no ${DEV_USER}@${DEV_HOST} "rm -rf /home/student/frontend"
-        - ssh -o StrictHostKeyChecking=no ${DEV_USER}@${DEV_HOST} "mkdir -p /home/student/frontend"
-        - scp -o StrictHostKeyChecking=no ${CI_PROJECT_DIR}/frontend/default.conf ${DEV_USER}@${DEV_HOST}:/home/student/frontend/default.conf 
-        - envsubst < ./frontend/deploy.sh|ssh ${DEV_USER}@${DEV_HOST} 
+        - echo "VERSION=$CI_COMMIT_SHA" >> deploy.env
+        - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin $CI_REGISTRY
+        - docker --context remote compose --env-file deploy.env up frontend -d --pull "always" --force-recreate
     environment:
         name: review/$CI_COMMIT_REF_NAME
         url: http://${DEV_HOST}:80

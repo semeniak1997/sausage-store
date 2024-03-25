@@ -3,7 +3,7 @@ version: "3.8"
 services:
   backend:
     image: ${CI_REGISTRY_IMAGE}/sausage-backend:$CI_COMMIT_SHA 
-    container_name: sausage-backend
+    #container_name: sausage-backend
     environment:
       VIRTUAL_HOST: "backend"
       VIRTUAL_PORT: "8080"
@@ -13,6 +13,8 @@ services:
     restart: always
     networks:
       - sausage-store
+    deploy:
+      replicas: 3
 
   backend-report:
     image: ${CI_REGISTRY_IMAGE}/sausage-backend-report:$CI_COMMIT_SHA 

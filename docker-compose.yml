@@ -5,6 +5,8 @@ services:
     image: ${CI_REGISTRY_IMAGE}/sausage-backend:$CI_COMMIT_SHA 
     container_name: sausage-backend
     environment:
+      VIRTUAL_HOST: "backend"
+      VIRTUAL_PORT: "8080"
       SPRING_DATASOURCE_USERNAME: ${PSQL_USER}
       SPRING_DATASOURCE_PASSWORD: ${PSQL_PASS}
       SPRING_DATASOURCE_URL: jdbc:postgresql://${PSQL_HOST}:${PSQL_PORT}/${PSQL_DBNAME}
@@ -26,10 +28,14 @@ services:
     image: ${CI_REGISTRY_IMAGE}/sausage-frontend:$CI_COMMIT_SHA 
     container_name: sausage-frontend
     restart: always
+    environment:
+      DEFAULT_HOST: "backend"
     ports:
       - "80:80"
     networks:
       - sausage-store
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock:ro  
 
 networks:
   sausage-store:

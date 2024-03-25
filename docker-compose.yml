@@ -14,7 +14,7 @@ services:
     networks:
       - sausage-store
     deploy:
-      replicas: 3
+      replicas: 2
 
   backend-report:
     image: ${CI_REGISTRY_IMAGE}/sausage-backend-report:$CI_COMMIT_SHA 

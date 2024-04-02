@@ -105,35 +105,7 @@ deploy-backend:
       - echo "PSQL_PORT=${PSQL_PORT}" >> deploy.env
       - echo "PSQL_DBNAME=${PSQL_DBNAME}" >> deploy.env
       - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin $CI_REGISTRY
-      - blue=$(docker --context remote container inspect  --format "{{json .State.Health }}" blue-backend | jq -r '.Status') || true
-      - green=$(docker --context remote container inspect  --format "{{json .State.Health }}" green-backend | jq -r '.Status') || true
-      - echo $blue
-      - echo $green
-      - >
-        if [ $blue == 'healthy' ]; then
-            docker --context remote compose --env-file deploy.env up green-backend -d --pull "always" --force-recreate
-            while [ $(docker --context remote container inspect --format "{{json .State.Health }}" green-backend | jq -r '.Status') != 'healthy' ]
-            do
-                sleep 5
-            done
-            docker --context remote compose stop blue-backend
-            echo "Green deployed successfully"
-        elif [ $green == 'healthy' ]; then
-            docker --context remote compose --env-file deploy.env up green-backend -d --pull "always" --force-recreate
-            while [ $(docker --context remote container inspect  --format "{{json .State.Health }}" blue-backend | jq -r '.Status') != 'healthy' ]
-            do
-                sleep 5
-            done
-            docker --context remote compose stop green-backend
-            echo "Blue deployed successfully"
-        else
-            docker --context remote compose --env-file deploy.env up blue-backend -d --pull "always" --force-recreate
-            while [ $(docker --context remote container inspect  --format "{{json .State.Health }}" blue-backend | jq -r '.Status') != 'healthy' ]
-            do
-                sleep 5
-            done
-            echo "The blue/green strategy is being used for the first time. Blue deployed successfully"
-        fi
+      - sh ./backend/blue-green.sh
 
   environment:
       name: review/$CI_COMMIT_REF_NAME

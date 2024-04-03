@@ -1,9 +1,9 @@
 version: "3.8"
 
 services:
-  backend:
+  blue-backend:
     image: ${CI_REGISTRY_IMAGE}/sausage-backend:$CI_COMMIT_SHA 
-    #container_name: sausage-backend
+    container_name: blue-backend
     environment:
       VIRTUAL_HOST: "backend"
       VIRTUAL_PORT: "8080"
@@ -13,8 +13,35 @@ services:
     restart: always
     networks:
       - sausage-store
-    deploy:
-      replicas: 2
+    healthcheck:
+      test: wget --quiet -O - http://localhost:8080/actuator/health || echo "Request failed"
+      interval: 30s
+      timeout: 10s
+      start_period: 20s
+      retries: 6
+#    deploy:
+#      replicas: 1
+
+  green-backend:
+    image: ${CI_REGISTRY_IMAGE}/sausage-backend:$CI_COMMIT_SHA 
+    container_name: green-backend
+    environment:
+      VIRTUAL_HOST: "backend"
+      VIRTUAL_PORT: "8080"
+      SPRING_DATASOURCE_USERNAME: ${PSQL_USER}
+      SPRING_DATASOURCE_PASSWORD: ${PSQL_PASS}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://${PSQL_HOST}:${PSQL_PORT}/${PSQL_DBNAME}
+    restart: always
+    networks:
+      - sausage-store
+    healthcheck:
+      test: wget --quiet -O - http://localhost:8080/actuator/health || echo "Request failed"
+      interval: 30s
+      timeout: 10s
+      start_period: 20s
+      retries: 6
+#    deploy:
+#      replicas: 1
 
   backend-report:
     image: ${CI_REGISTRY_IMAGE}/sausage-backend-report:$CI_COMMIT_SHA 

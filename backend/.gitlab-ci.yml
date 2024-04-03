@@ -89,7 +89,7 @@ deploy-backend:
       - upload-backend-release
   image: docker:24.0.7-alpine3.19
   before_script:
-      - apk add docker-cli-compose openssh-client bash gettext 
+      - apk add docker-cli-compose openssh-client bash gettext jq
       - eval $(ssh-agent -s)
       - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
       - mkdir -p ~/.ssh
@@ -105,7 +105,8 @@ deploy-backend:
       - echo "PSQL_PORT=${PSQL_PORT}" >> deploy.env
       - echo "PSQL_DBNAME=${PSQL_DBNAME}" >> deploy.env
       - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin $CI_REGISTRY
-      - docker --context remote compose --env-file deploy.env up backend -d --pull "always" --force-recreate
+      - sh ./backend/blue-green.sh
+
   environment:
       name: review/$CI_COMMIT_REF_NAME
       url: http://${DEV_HOST}:80

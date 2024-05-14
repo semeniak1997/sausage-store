@@ -84,32 +84,50 @@ upload-backend-release:
     - crane tag $CI_REGISTRY_IMAGE/sausage-backend:$CI_COMMIT_SHA $CI_COMMIT_SHA
 
 deploy-backend:
+  #stage: deploy
+  #needs:
+  #    - upload-backend-release
+  #image: docker:24.0.7-alpine3.19
+  #before_script:
+  #    - apk add docker-cli-compose openssh-client bash gettext jq
+  #    - eval $(ssh-agent -s)
+  #    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+  #    - mkdir -p ~/.ssh
+  #    - chmod 700 ~/.ssh
+  #    - echo "${SSH_KNOWN_HOSTS}" >> ~/.ssh/known_hosts
+  #    - chmod 644 ~/.ssh/known_hosts
+  #    - docker context create remote --description "remote ssh" --docker "host=ssh://${DEV_USER}@${DEV_HOST}"
+  #script: 
+  #    - echo "VERSION=$CI_COMMIT_SHA" >> deploy.env
+  #    - echo "PSQL_USER=${PSQL_USER}" >> deploy.env
+  #    - echo "PSQL_PASS=${PSQL_PASS}" >> deploy.env
+  #    - echo "PSQL_HOST=${PSQL_HOST}" >> deploy.env
+  #    - echo "PSQL_PORT=${PSQL_PORT}" >> deploy.env
+  #    - echo "PSQL_DBNAME=${PSQL_DBNAME}" >> deploy.env
+  #    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin $CI_REGISTRY
+  #    - sh ./backend/blue-green.sh
   stage: deploy
   needs:
       - upload-backend-release
-  image: docker:24.0.7-alpine3.19
+  image: bitnami/kubectl:latest
   before_script:
-      - apk add docker-cli-compose openssh-client bash gettext jq
-      - eval $(ssh-agent -s)
-      - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
-      - mkdir -p ~/.ssh
-      - chmod 700 ~/.ssh
-      - echo "${SSH_KNOWN_HOSTS}" >> ~/.ssh/known_hosts
-      - chmod 644 ~/.ssh/known_hosts
-      - docker context create remote --description "remote ssh" --docker "host=ssh://${DEV_USER}@${DEV_HOST}"
-  script: 
-      - echo "VERSION=$CI_COMMIT_SHA" >> deploy.env
-      - echo "PSQL_USER=${PSQL_USER}" >> deploy.env
-      - echo "PSQL_PASS=${PSQL_PASS}" >> deploy.env
-      - echo "PSQL_HOST=${PSQL_HOST}" >> deploy.env
-      - echo "PSQL_PORT=${PSQL_PORT}" >> deploy.env
-      - echo "PSQL_DBNAME=${PSQL_DBNAME}" >> deploy.env
-      - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin $CI_REGISTRY
-      - sh ./backend/blue-green.sh
+      - echo "$KUBE_CONFIG" >> ~/.kube/config  
+      - kubectl config use-context std-025-02@yc-managed-k8s
+        
+  script:
+      - envsubst < ./kubernetes/backend/configmap.yml    
+      - envsubst < ./kubernetes/backend/secrets.yml
+      - envsubst < ./kubernetes/backend/deployment.yml
+      - kubectl delete -f ./kubernetes/backend/ --ignore-not-found=true
+      - kubectl apply -f ./kubernetes/backend/
+      - rm ~/.kube/config
+      - rm ./kubernetes/backend/configmap.yml
+      - rm ./kubernetes/backend/secrets.yml
+      - rm ./kubernetes/backend/deployment.yml
+      - echo "backend is deployed"
 
   environment:
       name: review/$CI_COMMIT_REF_NAME
-      url: http://${DEV_HOST}:80
   rules: 
     - when: manual
 

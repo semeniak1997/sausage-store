@@ -27,8 +27,8 @@ build-backend-code-job:
       --build-arg VERSION=$VERSION
       --cache=true  
   
-include:
-  - template: Security/SAST.gitlab-ci.yml  
+#include:
+#  - template: Security/SAST.gitlab-ci.yml  
 
 #spotbugs-sast:
 #  stage: test

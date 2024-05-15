@@ -92,23 +92,36 @@ deploy-frontend:
     stage: deploy
     needs:
         - upload-frontend-release
-    image: docker:24.0.7-alpine3.19
+    #image: docker:24.0.7-alpine3.19
+    #before_script:
+    #    - apk add docker-cli-compose openssh-client bash gettext
+    #    - eval $(ssh-agent -s)
+    #    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    #    - mkdir -p ~/.ssh
+    #    - chmod 700 ~/.ssh
+    #    - echo "${SSH_KNOWN_HOSTS}" >> ~/.ssh/known_hosts
+    #    - chmod 644 ~/.ssh/known_hosts
+    #    - docker context create remote --description "remote ssh" --docker "host=ssh://${DEV_USER}@${DEV_HOST}"
+    #script:
+    #    - echo "VERSION=$CI_COMMIT_SHA" >> deploy.env
+    #    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin $CI_REGISTRY
+    #    - docker --context remote compose --env-file deploy.env up frontend -d --pull "always" --force-recreate
+    image: bitnami/kubectl:latest
     before_script:
-        - apk add docker-cli-compose openssh-client bash gettext
-        - eval $(ssh-agent -s)
-        - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
-        - mkdir -p ~/.ssh
-        - chmod 700 ~/.ssh
-        - echo "${SSH_KNOWN_HOSTS}" >> ~/.ssh/known_hosts
-        - chmod 644 ~/.ssh/known_hosts
-        - docker context create remote --description "remote ssh" --docker "host=ssh://${DEV_USER}@${DEV_HOST}"
-    script:
-        - echo "VERSION=$CI_COMMIT_SHA" >> deploy.env
-        - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin $CI_REGISTRY
-        - docker --context remote compose --env-file deploy.env up frontend -d --pull "always" --force-recreate
+        - echo "$KUBE_CONFIG" >> ~/.kube/config  
+        - kubectl config use-context std-025-02@yc-managed-k8s
+    script:     
+        - envsubst < ./kubernetes/frontend/secrets.yaml > ./kubernetes/frontend/secrets_fill.yaml
+        - envsubst < ./kubernetes/frontend/deployment.yaml > ./kubernetes/frontend/deployment_fill.yaml
+        - rm ./kubernetes/frontend/secrets.yaml
+        - rm ./kubernetes/frontend/deployment.yaml
+        - kubectl delete -f ./kubernetes/frontend/ --ignore-not-found=true
+        - kubectl apply -f ./kubernetes/frontend/
+        - rm ~/.kube/config
+        - echo "frontend is deployed"
     environment:
         name: review/$CI_COMMIT_REF_NAME
-        url: http://${DEV_HOST}:80
+        #url: http://${DEV_HOST}:80
     rules: 
       - when: manual
 

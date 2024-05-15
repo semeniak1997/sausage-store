@@ -121,7 +121,6 @@ deploy-backend:
       - rm kubernetes/backend/secrets.yaml
       - rm kubernetes/backend/deployment.yaml
       - kubectl delete -f ./kubernetes/backend/ --ignore-not-found=true
-      - cat kubernetes/backend/secrets.yaml
       - kubectl apply -f ./kubernetes/backend/
       - rm ~/.kube/config
       - echo "backend is deployed"

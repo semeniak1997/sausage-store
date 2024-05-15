@@ -113,19 +113,17 @@ deploy-backend:
   before_script:
       - echo "$KUBE_CONFIG" >> ~/.kube/config  
       - kubectl config use-context std-025-02@yc-managed-k8s
-      - pwd 
-      - ls
   script:
       - envsubst < ./kubernetes/backend/configmap.yaml > ./kubernetes/backend/configmap_fill.yaml
       - envsubst < ./kubernetes/backend/secrets.yaml > ./kubernetes/backend/secrets_fill.yaml
       - envsubst < ./kubernetes/backend/deployment.yaml > ./kubernetes/backend/deployment_fill.yaml
+      - rm kubernetes/backend/configmap.yaml
+      - rm kubernetes/backend/secrets.yaml
+      - rm kubernetes/backend/deployment.yaml
       - kubectl delete -f ./kubernetes/backend/ --ignore-not-found=true
       - cat kubernetes/backend/secrets.yaml
       - kubectl apply -f ./kubernetes/backend/
       - rm ~/.kube/config
-      - rm kubernetes/backend/configmap.yaml
-      - rm kubernetes/backend/secrets.yaml
-      - rm kubernetes/backend/deployment.yaml
       - echo "backend is deployed"
 
   environment:

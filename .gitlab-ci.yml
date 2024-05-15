@@ -20,6 +20,7 @@ backend:
   only: 
     changes:
       - backend/**/*
+      #- kubernetes/backend/**/*
 
 backend-report:
   stage: module-pipelines

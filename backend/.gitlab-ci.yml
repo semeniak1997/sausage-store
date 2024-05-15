@@ -116,13 +116,11 @@ deploy-backend:
       - pwd 
       - ls
   script:
-      - cd kubernetes/backend
-      - ls
       - envsubst < kubernetes/backend/configmap.yml
       - envsubst < kubernetes/backend/secrets.yml
       - envsubst < kubernetes/backend/deployment.yml
-      - kubectl delete -f ./kubernetes/backend/ --ignore-not-found=true
-      - kubectl apply -f ./kubernetes/backend/
+      - kubectl delete -f kubernetes/backend/ --ignore-not-found=true
+      - kubectl apply -f kubernetes/backend/
       - rm ~/.kube/config
       - rm kubernetes/backend/configmap.yml
       - rm kubernetes/backend/secrets.yml

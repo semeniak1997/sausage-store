@@ -115,6 +115,7 @@ deploy-backend:
       - kubectl config use-context std-025-02@yc-managed-k8s
       - pwd 
       - ls
+      - tree
   script:
       - envsubst < ./kubernetes/backend/configmap.yml    
       - envsubst < ./kubernetes/backend/secrets.yml

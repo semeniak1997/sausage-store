@@ -104,7 +104,7 @@ deploy-backend-report:
       - echo "backend-report is deployed"
   environment:
       name: review/$CI_COMMIT_REF_NAME
-      #url: http://${DEV_HOST}:80
+      url: https://${K8S_HOST}
   rules: 
     - when: manual
 

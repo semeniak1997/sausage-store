@@ -120,6 +120,7 @@ deploy-backend:
       - envsubst < ./kubernetes/backend/secrets.yaml > ./kubernetes/backend/secrets_fill.yaml
       - envsubst < ./kubernetes/backend/deployment.yaml > ./kubernetes/backend/deployment_fill.yaml
       - kubectl delete -f ./kubernetes/backend/ --ignore-not-found=true
+      - cat kubernetes/backend/secrets.yaml
       - kubectl apply -f ./kubernetes/backend/
       - rm ~/.kube/config
       - rm kubernetes/backend/configmap.yaml

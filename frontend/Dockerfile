@@ -4,7 +4,6 @@ COPY . .
 RUN npm install \
     && npm run build
 
-FROM nginxproxy/nginx-proxy:1.3.1-alpine
+FROM nginx:1.25.5-alpine3.19
 COPY --from=builder /usr/src/app/dist/frontend /usr/share/nginx/html
-COPY --from=builder /usr/src/app/nginx.tmpl /app/nginx.tmpl
 EXPOSE 80

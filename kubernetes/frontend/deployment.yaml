@@ -1,0 +1,59 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  labels:
+    app: frontend
+spec:
+  revisionHistoryLimit: 15
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+        - name: frontend
+          image: gitlab.praktikum-services.ru:5050/std-025-02/sausage-store/sausage-frontend:${CI_COMMIT_SHA}
+          imagePullPolicy: Always
+          env:
+            - name: DEFAULT_HOST
+              value: backend
+          ports:
+            - name: frontend
+              containerPort: 80
+          resources:
+            limits:
+              cpu: "1"  
+              memory: "1Gi" 
+            requests:
+              cpu: "0.1"  
+              memory: "128Mi"
+          livenessProbe:
+            httpGet:
+              path: /api/products
+              port: 80
+            initialDelaySeconds: 15
+            periodSeconds: 30
+            timeoutSeconds: 1
+            failureThreshold: 6
+          volumeMounts:
+            - name: nginx-conf
+              mountPath: /etc/nginx/nginx.conf
+              subPath: nginx.conf
+              readOnly: true
+      volumes:
+        - name: nginx-conf
+          configMap:
+            name: nginx-conf
+            items:
+              - key: nginx.conf
+                path: nginx.conf
+      imagePullSecrets:
+        - name: docker-config-secret

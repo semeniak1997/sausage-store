@@ -68,28 +68,43 @@ deploy-backend-report:
   stage: deploy
   needs:
       - upload-backend-report-release
-  image: docker:24.0.7-alpine3.19
+  #image: docker:24.0.7-alpine3.19
+  #before_script:
+  #    - apk add docker-cli-compose openssh-client bash gettext 
+  #    - eval $(ssh-agent -s)
+  #    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+  #    - mkdir -p ~/.ssh
+  #    - chmod 700 ~/.ssh
+  #    - echo "${SSH_KNOWN_HOSTS}" >> ~/.ssh/known_hosts
+  #    - chmod 644 ~/.ssh/known_hosts
+  #    - docker context create remote --description "remote ssh" --docker "host=ssh://${DEV_USER}@${DEV_HOST}"
+  #script: 
+  #    - echo "VERSION=$CI_COMMIT_SHA" >> deploy.env
+  #    - echo "MONGO_USER=${MONGO_USER}" >> deploy.env
+  #    - echo "MONGO_PASS=${MONGO_PASS}" >> deploy.env
+  #    - echo "MONGO_HOST=${MONGO_HOST}" >> deploy.env
+  #    - echo "MONGO_PORT=${MONGO_PORT}" >> deploy.env
+  #    - echo "MONGO_DBNAME=${MONGO_DBNAME}" >> deploy.env
+  #    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin $CI_REGISTRY
+  #    - docker --context remote compose --env-file deploy.env up backend-report -d --pull "always" --force-recreate
+  image: bitnami/kubectl:latest
   before_script:
-      - apk add docker-cli-compose openssh-client bash gettext 
-      - eval $(ssh-agent -s)
-      - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
-      - mkdir -p ~/.ssh
-      - chmod 700 ~/.ssh
-      - echo "${SSH_KNOWN_HOSTS}" >> ~/.ssh/known_hosts
-      - chmod 644 ~/.ssh/known_hosts
-      - docker context create remote --description "remote ssh" --docker "host=ssh://${DEV_USER}@${DEV_HOST}"
+      - echo "$KUBE_CONFIG" >> ~/.kube/config  
+      - kubectl config use-context std-025-02@yc-managed-k8s
   script: 
-      - echo "VERSION=$CI_COMMIT_SHA" >> deploy.env
-      - echo "MONGO_USER=${MONGO_USER}" >> deploy.env
-      - echo "MONGO_PASS=${MONGO_PASS}" >> deploy.env
-      - echo "MONGO_HOST=${MONGO_HOST}" >> deploy.env
-      - echo "MONGO_PORT=${MONGO_PORT}" >> deploy.env
-      - echo "MONGO_DBNAME=${MONGO_DBNAME}" >> deploy.env
-      - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin $CI_REGISTRY
-      - docker --context remote compose --env-file deploy.env up backend-report -d --pull "always" --force-recreate
+      - envsubst < ./kubernetes/backend-report/configmap.yaml > ./kubernetes/backend-report/configmap_fill.yaml     
+      - envsubst < ./kubernetes/backend-report/secrets.yaml > ./kubernetes/backend-report/secrets_fill.yaml
+      - envsubst < ./kubernetes/backend-report/deployment.yaml > ./kubernetes/backend-report/deployment_fill.yaml
+      - rm ./kubernetes/backend-report/configmap.yaml
+      - rm ./kubernetes/backend-report/secrets.yaml
+      - rm ./kubernetes/backend-report/deployment.yaml
+      - kubectl delete -f ./kubernetes/backend-report/ --ignore-not-found=true
+      - kubectl apply -f ./kubernetes/backend-report/
+      - rm ~/.kube/config
+      - echo "backend-report is deployed"
   environment:
       name: review/$CI_COMMIT_REF_NAME
-      url: http://${DEV_HOST}:80
+      url: https://${K8S_HOST}
   rules: 
     - when: manual
 

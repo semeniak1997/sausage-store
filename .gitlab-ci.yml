@@ -10,6 +10,7 @@ frontend:
   only: 
     changes:
       - frontend/**/*
+      - kubernetes/frontend/**/*
 
 backend:
   stage: module-pipelines
@@ -20,6 +21,7 @@ backend:
   only: 
     changes:
       - backend/**/*
+      - kubernetes/backend/**/*
 
 backend-report:
   stage: module-pipelines
@@ -30,4 +32,5 @@ backend-report:
   only: 
     changes:
       - backend-report/**/*
+      - kubernetes/backend-report/**/*
 

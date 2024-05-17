@@ -12,6 +12,7 @@ spec:
   selector:
     matchLabels:
       app: backend
+  revisionHistoryLimit: 12
   template:
     metadata:
       labels:

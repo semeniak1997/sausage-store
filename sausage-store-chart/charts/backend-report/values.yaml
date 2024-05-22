@@ -1,0 +1,10 @@
+backendReport:
+  image: gitlab.praktikum-services.ru:5050/std-025-02/sausage-store/sausage-backend-report:bb1d16f2fa469b8e8672e2439b16cde9185387f2
+  replicas: 1
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: 0.1
+    limits:
+      memory: "1025Mi"
+      cpu: 0.2   

@@ -1,0 +1,54 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-report
+  labels:
+    app: backend-report
+spec:
+  replicas: {{ .Values.backendReport.replicas }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 20%
+  selector:
+    matchLabels:
+      app: backend-report
+  revisionHistoryLimit: 12
+  template:
+    metadata:
+      labels:
+        app: backend-report
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:  
+          - weight: 100  
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                      - backend-report
+              topologyKey: "kubernetes.io/hostname"
+      containers:
+        - name: backend-report
+          image: {{ .Values.backendReport.image }}
+          imagePullPolicy: Always
+          envFrom:
+            - configMapRef:
+                name: backend-report-envs
+          ports:
+            - name: backend-report
+              containerPort: 8081
+          resources:
+            limits:
+              cpu: "{{ .Values.backendReport.resources.limits.cpu }}"  
+              memory: "{{ .Values.backendReport.resources.limits.memory }}" 
+            requests:
+              cpu: "{{ .Values.backendReport.resources.requests.cpu }}"  
+              memory: "{{ .Values.backendReport.resources.requests.memory }}"
+      imagePullSecrets:
+        - name: docker-config-secret

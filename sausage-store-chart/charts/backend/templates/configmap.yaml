@@ -1,0 +1,11 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+    name: backend-envs
+data:
+    SPRING_DATASOURCE_USERNAME: "${PSQL_USER}"
+    SPRING_DATASOURCE_PASSWORD: "${PSQL_PASS}"
+    SPRING_DATASOURCE_URL: "jdbc:postgresql://${PSQL_HOST}:${PSQL_PORT}/${PSQL_DBNAME}"
+    VIRTUAL_HOST: "backend"
+    REPORT_PATH: ""

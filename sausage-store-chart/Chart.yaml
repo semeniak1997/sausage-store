@@ -3,7 +3,7 @@ name: sausage-store
 description: Sausage Store Helm Chart
 type: application
 version: 1.0.9
-appVersion: "latest"
+appVersion: "1.0.9"
 icon: https://avatars.mds.yandex.net/get-altay/2056672/2a0000016d7bfb3092b46ca3588aba2cf781/XXL
 
 dependencies:

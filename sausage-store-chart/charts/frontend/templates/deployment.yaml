@@ -5,6 +5,14 @@ metadata:
   name: frontend
   labels:
     app: frontend
+    app.kubernetes.io/name: frontend
+    app.kubernetes.io/instance: "{{ .Release.Name }}"
+    app.kubernetes.io/version: "{{ .Chart.AppVersion }}"
+    app.kubernetes.io/managed-by: "{{ .Release.Service }}"
+    helm.sh/chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    app.kubernetes.io/component: frontend
+    app.kubernetes.io/part-of: sausage-store
+    env: "{{ .Values.global.environment }}"
 spec:
   revisionHistoryLimit: 12
   replicas: {{ .Values.frontend.replicas }}

@@ -1,0 +1,4 @@
+backend: 
+  image: gitlab.praktikum-services.ru:5050/std-025-02/sausage-store/sausage-backend:bb1d16f2fa469b8e8672e2439b16cde9185387f2
+  replicas: 1
+  

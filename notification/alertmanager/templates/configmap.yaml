@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: alertmanager
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: alertmanager
+data:
+  alertmanager.yml: |
+{{ .Files.Get "alertmanager.yml" | 
+    replace "{{ .Values.bot_token }}" .Values.bot_token | 
+    replace "{{ .Values.chat_id }}" .Values.chat_id | 
+    replace "{{ .Values.message }}"  .Values.message | 
+    indent 4 
+}}

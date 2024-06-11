@@ -1,0 +1,58 @@
+global:
+  resolve_timeout: 1m
+route:
+  group_by: ['project']
+  group_wait: 10s
+  group_interval: 30s
+  repeat_interval: 1m
+  receiver: "telegram_warning"
+  routes:
+    - receiver: "telegram_critical"
+      group_wait: 10s
+      match_re:
+        severity: critical
+      continue: true
+    - receiver: "telegram_warning"
+      group_wait: 10s
+      match_re:
+        severity: warning
+      continue: true
+receivers:
+  - name: "telegram_critical"
+    telegram_configs:
+      - send_resolved: true
+        bot_token: '{{ .Values.bot_token }}'
+        chat_id: {{ .Values.chat_id }}
+        message: |
+          {{ range .Alerts }}
+          🚨 
+          Severity:      {{ .Labels.severity }}
+          User:          std-025-02
+          Type:          {{ .Labels.alertname }}
+          Summary:       {{ .Annotations.summary }}
+          Description:   {{ .Annotations.description }}
+          Starts At:     {{ .StartsAt }}
+          Status:        {{ .Status }}
+          {{ if .Labels.kubernetes_pod_name }}
+          Pod Name:      {{ .Labels.kubernetes_pod_name }}
+          {{ end }}
+          {{ end }}
+  - name: "telegram_warning"
+    telegram_configs:
+      - send_resolved: true
+        bot_token: '{{ .Values.bot_token }}'
+        chat_id: {{ .Values.chat_id }}
+        message: |
+          {{ range .Alerts }}
+          🔔 
+          Severity:      {{ .Labels.severity }}
+          User:      std-025-02
+          Type:      {{ .Labels.alertname }}
+          Summary:      {{ .Annotations.summary }}
+          Description:      {{ .Annotations.description }}
+          Starts At:      {{ .StartsAt }}
+          Status:      {{ .Status }}
+          {{ if .Labels.kubernetes_pod_name }}
+          Pod Name:      {{ .Labels.kubernetes_pod_name }}
+          {{ end }}
+          {{ end }}          
